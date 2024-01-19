@@ -1,4 +1,4 @@
-#define GLFW_INCLUDE_VULKAN
+﻿#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
 #include <iostream>
@@ -13,15 +13,19 @@
 #include <optional>
 #include <set>
 
+//窗口宽高
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 
+//可以同时并行处理的帧数
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
+//要启用的校验层列表
 const std::vector<const char*> validationLayers = {
 	"VK_LAYER_KHRONOS_validation"
 };
 
+//所需的设备扩展列表
 const std::vector<const char*> deviceExtensions = {
 	VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
@@ -32,6 +36,7 @@ const bool enableValidationLayers = false;
 const bool enableValidationLayers = true;
 #endif
 
+//创建 VkDebugUtilsMessengerEXT 对象，但创建函数不会被 Vulkan 库自动加载，所以需要手动加载，创建代理函数来载入创建函数
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
 	auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
 	if (func != nullptr) {
@@ -41,6 +46,7 @@ VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMes
 	}
 }
 
+//创建 DestroyDebugUtilsMessengerEXT 的代理函数
 void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
 	auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
 	if (func != nullptr) {
@@ -48,8 +54,11 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 	}
 }
 
+//队列族结构体
 struct QueueFamilyIndices {
+	//支持绘制指令的队列族
 	std::optional<uint32_t> graphicsFamily;
+	//支持表现的队列族
 	std::optional<uint32_t> presentFamily;
 
 	bool isComplete() {
@@ -57,69 +66,112 @@ struct QueueFamilyIndices {
 	}
 };
 
+//交换链细节信息
 struct SwapChainSupportDetails {
+	//基础表面特性（交换链最小最大图像数量，最小最大图像宽高）
 	VkSurfaceCapabilitiesKHR capabilities;
+	//表面格式（像素格式，颜色空间）
 	std::vector<VkSurfaceFormatKHR> formats;
+	//可用的呈现模式
 	std::vector<VkPresentModeKHR> presentModes;
 };
 
 class HelloTriangleApplication {
 public:
 	void run() {
+
+		//初始化 GLFW
 		initWindow();
+		//初始化 Vulkan 对象
 		initVulkan();
+		//直到窗口关闭终止
 		mainLoop();
+		//资源清理
 		cleanup();
 	}
 
 private:
+	//窗口句柄
 	GLFWwindow* window;
 
+	//实例句柄
 	VkInstance instance;
+	//存储回调函数信息
 	VkDebugUtilsMessengerEXT debugMessenger;
+	//窗口表面
 	VkSurfaceKHR surface;
 
+	//存储显卡信息，该对象会在 VkInstance 清楚时自动清除自己
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+	//逻辑设备，作为与物理设备交互的接口
 	VkDevice device;
 
+	//存储逻辑设备的队列句柄，会随着逻辑设备的清楚而自动清楚
 	VkQueue graphicsQueue;
+	//呈现队列句柄
 	VkQueue presentQueue;
 
+	//存储交换链
 	VkSwapchainKHR swapChain;
+	//存储图像句柄
 	std::vector<VkImage> swapChainImages;
+	//存储交换链图像格式
 	VkFormat swapChainImageFormat;
+	//存储交换链图像范围
 	VkExtent2D swapChainExtent;
+	//存储图像视图
 	std::vector<VkImageView> swapChainImageViews;
+	//存储所有帧缓冲对象
 	std::vector<VkFramebuffer> swapChainFramebuffers;
 
+	//存储渲染流程
 	VkRenderPass renderPass;
+	//存储 Layout
 	VkPipelineLayout pipelineLayout;
+	//存储管线对象
 	VkPipeline graphicsPipeline;
 
+	//指令池，管理指令缓冲对象使用的内存并负责指令缓冲对象的分配
 	VkCommandPool commandPool;
+	//存储指令缓冲对象
 	std::vector<VkCommandBuffer> commandBuffers;
 
+	//图像被获取，可以开始渲染的信号量
 	std::vector<VkSemaphore> imageAvailableSemaphores;
+	//渲染已经结果，可以开始呈现的信号量
 	std::vector<VkSemaphore> renderFinishedSemaphores;
+	//为每一帧创建栅栏，来进行 CPU 和 GPU 之间的同步
 	std::vector<VkFence> inFlightFences;
+	//追踪当前渲染的是哪一帧
 	uint32_t currentFrame = 0;
 
+	//标记窗口是否发生改变
 	bool framebufferResized = false;
 
 	void initWindow() {
+		//初始化 GLFW 窗口
 		glfwInit();
 
+		//初始化 GLFW 库，GLFW_NO_API 显式地阻止自动创建 OpenGL 上下文
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
+		//禁止窗口大小改变
+		//glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
+		//存储创建的窗口句柄
 		window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+		//将 this 指针存储在 GLFW 窗口相关的数据中
 		glfwSetWindowUserPointer(window, this);
+		//设置处理窗口大小改变的回调函数
 		glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 	}
 
+	//静态函数才能用作回调函数
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
 		auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
 		app->framebufferResized = true;
 	}
+
 
 	void initVulkan() {
 		createInstance();
@@ -138,23 +190,30 @@ private:
 	}
 
 	void mainLoop() {
+		//窗口不关闭
 		while (!glfwWindowShouldClose(window)) {
+			//执行事件处理
 			glfwPollEvents();
+			//绘制三角形
 			drawFrame();
 		}
 
+		//等待逻辑设备操作结束执行时才销毁窗口
 		vkDeviceWaitIdle(device);
 	}
 
 	void cleanupSwapChain() {
+		//消除帧缓冲
 		for (size_t i = 0; i < swapChainFramebuffers.size(); i++) {
 			vkDestroyFramebuffer(device, swapChainFramebuffers[i], nullptr);
 		}
-
+		
+		//清楚图像视图
 		for (size_t i = 0; i < swapChainImageViews.size(); i++) {
 			vkDestroyImageView(device, swapChainImageViews[i], nullptr);
 		}
 
+		//清除交换链
 		vkDestroySwapchainKHR(device, swapChain, nullptr);
 	}
 
@@ -165,30 +224,40 @@ private:
 		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
 
 		vkDestroyRenderPass(device, renderPass, nullptr);
-
+		
+		//消除信号量
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 			vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
 			vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
 			vkDestroyFence(device, inFlightFences[i], nullptr);
 		}
 
+		//消除指令池
 		vkDestroyCommandPool(device, commandPool, nullptr);
 
+		//清理逻辑设备
 		vkDestroyDevice(device, nullptr);
 
+		//清理 VkDebugUtilsMessengerEXT 对象
 		if (enableValidationLayers) {
 			DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
 		}
 
+		//消除表面
 		vkDestroySurfaceKHR(instance, surface, nullptr);
+		//清除实例
 		vkDestroyInstance(instance, nullptr);
-
+		
+		//清除窗口
 		glfwDestroyWindow(window);
-
+		
+		// GLFW 停止
 		glfwTerminate();
 	}
 
+	//重建交换链
 	void recreateSwapChain() {
+		//最小化时，停止渲染
 		int width = 0, height = 0;
 		glfwGetFramebufferSize(window, &width, &height);
 		while (width == 0 || height == 0) {
@@ -196,7 +265,9 @@ private:
 			glfwWaitEvents();
 		}
 
+		//等待设备处于空闲状态，避免在对象使用过程中将其清除重建
 		vkDeviceWaitIdle(device);
+
 
 		cleanupSwapChain();
 
@@ -205,11 +276,14 @@ private:
 		createFramebuffers();
 	}
 
+	//创建实例
 	void createInstance() {
+		//检查校验层
 		if (enableValidationLayers && !checkValidationLayerSupport()) {
 			throw std::runtime_error("validation layers requested, but not available!");
 		}
 
+		//应用程序信息
 		VkApplicationInfo appInfo{};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 		appInfo.pApplicationName = "Hello Triangle";
@@ -218,15 +292,19 @@ private:
 		appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 		appInfo.apiVersion = VK_API_VERSION_1_0;
 
+		//所需全局扩展和校验层的结构体
 		VkInstanceCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 		createInfo.pApplicationInfo = &appInfo;
-
+		
+		//全局扩展
 		auto extensions = getRequiredExtensions();
 		createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 		createInfo.ppEnabledExtensionNames = extensions.data();
 
+		//创建回调函数创建信息指针作为 p next
 		VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
+		//全局校验层
 		if (enableValidationLayers) {
 			createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 			createInfo.ppEnabledLayerNames = validationLayers.data();
@@ -239,11 +317,29 @@ private:
 			createInfo.pNext = nullptr;
 		}
 
+		//创建 Vulkan 实例
 		if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create instance!");
 		}
 	}
 
+	/*
+	//获取扩展信息
+	//获取扩展数量
+	uint32_t extensionCount = 0;
+	vkEnumerateinstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+	//存储扩展信息
+	std::vector<VkExtensionProperties> Extensions(extensionCount);
+	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, Extensions.data());
+	std::cout << "available extensions:" << std::endl;
+
+	for (const auto& extension : Extensions)
+	{
+		std::cout << "\t" << extension.extensionName << std::endl;
+	}
+	*/
+
+	//生成回调函数的创建信息
 	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
 		createInfo = {};
 		createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
@@ -252,12 +348,14 @@ private:
 		createInfo.pfnUserCallback = debugCallback;
 	}
 
+	// 窗口表面
 	void createSurface() {
+		//下面这个函数是跨平台的
 		if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create window surface!");
 		}
 	}
-
+	//初始化回调函数
 	void setupDebugMessenger() {
 		if (!enableValidationLayers) return;
 
@@ -269,17 +367,30 @@ private:
 		}
 	}
 
+	//接受调试信息的回调函数
+	/*
+		mseeageSeverity 指定消息级别（可能是诊断信息、资源创建之类的信息、警告信息、不合法和可能造成崩溃的信息）
+		messageType 消息类型（与规范性能无关，违反规范或发生可能的错误，进行了可能影响 Vulkan 性能的行为
+		pCallbackData 指向一个结构体的指针，结构体包含：以 null 结尾包含调试信息的字符串，存储有和消息相关的 Vulkan 对象句柄的数组、数组中的对象个数
+		pUserData 设置回调函数时，传递的数据指针
+	*/
+
+	//物理设备和队列族
+	//选择一个物理设备，选第一个满足需求的设备
 	void pickPhysicalDevice() {
+		//请求显卡数量
 		uint32_t deviceCount = 0;
 		vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 
 		if (deviceCount == 0) {
 			throw std::runtime_error("failed to find GPUs with Vulkan support!");
 		}
-
+		
+		//存储 VkPhysicalDevice 对象
 		std::vector<VkPhysicalDevice> devices(deviceCount);
 		vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
+		//检查设备，并选择使用第一个满足需求的设备
 		for (const auto& device : devices) {
 			if (isDeviceSuitable(device)) {
 				physicalDevice = device;
@@ -290,6 +401,15 @@ private:
 		if (physicalDevice == VK_NULL_HANDLE) {
 			throw std::runtime_error("failed to find a suitable GPU!");
 		}
+
+		//给设备按照特性加权打分，分高者任之
+		//std::multimap<int, VkPhysicalDevice> candidates;
+		// for (const auto& device : device) {
+		//	int score = rateDeviceSuitability(device);
+		//	candidates.insert(std::make_pair(score, device));
+		//} else {
+		//	throw std::runtime_error("failed to find a suitable GPU!")
+		//}
 	}
 
 	void createLogicalDevice() {
@@ -818,11 +938,23 @@ private:
 		return details;
 	}
 
+	//检查获取的设备是否满足我们的需求
 	bool isDeviceSuitable(VkPhysicalDevice device) {
+		////基础的设备属性，如名称、类型、支持的 Vulkan 版本
+		//VkPhysicalDeviceProperties deviceProperties,
+		////纹理压缩、64位浮点和多视口渲染等特性
+		//VkPhysicalDeviceFeatures deviceFeatures;
+		//vkGetPhysicalDeviceProperties(device, &deviceProperties);
+		//vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+		//
+		//return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && deviceFeatures.geometryShader;
+
 		QueueFamilyIndices indices = findQueueFamilies(device);
 
+		//检测所需设备扩展是否可行
 		bool extensionsSupported = checkDeviceExtensionSupport(device);
 
+		//检测交换链的能力是否满足需求
 		bool swapChainAdequate = false;
 		if (extensionsSupported) {
 			SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
@@ -832,21 +964,49 @@ private:
 		return indices.isComplete() && extensionsSupported && swapChainAdequate;
 	}
 
+	/*
+	* int rateDeviceSuitability(VkPhysicalDevice device) {
+	* //基础的设备属性，如名称、类型、支持的 Vulkan 版本
+	* VkPhysicalDeviceProperties deviceProperties;
+	* //纹理压缩，64 位浮点和多视口渲染等特性
+	* VkPhysicalDeviceFeatures deviceFeatures;
+	* vkGetPhysicalDeviceProperties(device, &deviceProperties);
+	* vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+	* int score = 0;
+	* 
+	* //独显加分
+	* if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+	*	score += 1000;
+	* }
+	* //纹理最大尺寸加分
+	* score += deviceProperties.limits.maxImageDimension2D;
+	* if (!deviceFeatures.geometryShader)
+		return 0;
+	* return score;
+	*/
+
+	//查找并返回需求的队列族的索引
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
 		QueueFamilyIndices indices;
 		
+		//获取设备队列族个数
 		uint32_t queueFamilyCount = 0;
 		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
 
+		//存储队列族的 Properties
 		std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
 		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
 
+		//队列族包含很多信息，如支持的操作类型、该队列族可创建的队列个数
+		//找到一个支持的队列族
 		int i = 0;
 		for (const auto& queueFamily : queueFamilies) {
+			//支持绘制指令的队列族索引
 			if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
 				indices.graphicsFamily = i;
 			}
 
+			//支持表现的队列族索引
 			VkBool32 presentSupport = false;
 			vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
 
@@ -880,6 +1040,7 @@ private:
 		return requiredExtensions.empty();
 	}
 
+	//根据是否启用校验层， 返回所需的扩展列表
 	std::vector<const char*> getRequiredExtensions() {
 		uint32_t glfwExtensionCount = 0;
 		const char** glfwExtensions;
@@ -894,13 +1055,16 @@ private:
 		return extensions;
 	}
 
+	//检查配置的校验层是否被支持
 	bool checkValidationLayerSupport() {
+		//获取所有可用的校验层列表
 		uint32_t layerCount;
 		vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
 		std::vector<VkLayerProperties> availableLayers(layerCount);
 		vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
+		//检查是否所有 validationLayers 列表中的校验层可以在 availableLayers 中找到
 		for (const char* layerName : validationLayers) {
 			bool layerFound = false;
 
