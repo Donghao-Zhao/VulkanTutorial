@@ -1,39 +1,84 @@
-﻿#define GLFW_INCLUDE_VULKAN
+﻿/* Author Donghao Zhao */
+
+#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
 
+//Input and output library, necessary for input and output operation
+//输入输出流库
 #include <iostream>
+
+//File stream library, necessary for file operation
+//文件流库
 #include <fstream>
+
+//Standard exception library, necessary for reporting and propagating errors
+//标准异常库
 #include <stdexcept>
-#include <algorithm>	// Necessary for std::clamp
+
+//Algorithm library, necessary for std::clamp
+//算法库，std::clamp 方法需要
+#include <algorithm>
+
+//Vector Container library
+//vector 容器库
 #include <vector>
+
+//C string library
+//C string 库
 #include <cstring>
+
+//C standard library, necessary for EXIT_SUCCESS and EXIT_FAILURE macro
+//C 标准库，EXIT_SUCCESS and EXIT_FAILURE 宏需要
 #include <cstdlib>
-#include <cstdint>		// Necessary for uint32_t
-#include <limits>		// Necessary for std::numeric_limits
+
+//C standard integer, necessary for uint32_t
+//C 标准整型库，uint32_t 需要
+#include <cstdint>
+
+//Determine the minimum and maximum of data types, and necessary for std::numeric_limits
+//用以确定数据类型的范围，std::numeric_limits 需要
+#include <limits>
+
+//Array library
+//array 库
 #include <array>
+
+//?
+//？
 #include <optional>
+
+//Set library
+//Set 库
 #include <set>
 
-//窗口宽高
+//The width of the window
+//窗口的宽
 const uint32_t WIDTH = 800;
+//The height of the window
+//窗口的高
 const uint32_t HEIGHT = 600;
 
 //可以同时并行处理的帧数
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
-//要启用的校验层列表
+//The validation layers that we would like to enable
+//要启用的校验层
 const std::vector<const char*> validationLayers = {
+	//All useful standard validation layers
+	//所有的标准校验层
 	"VK_LAYER_KHRONOS_validation"
 };
 
-//所需的设备扩展列表
+//
+//所需的设备扩展
 const std::vector<const char*> deviceExtensions = {
 	VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
-//C++ NDEBUG 宏定义
+//Enable validation with respect to the NDEBUG C++ standard macro
+//根据 C++ NDEBUG 宏定义来确定是否启用校验层
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
 #else
@@ -80,65 +125,122 @@ struct SwapChainSupportDetails {
 	std::vector<VkPresentModeKHR> presentModes;
 };
 
+//The vertex structure
 //顶点数据结构体
 struct Vertex {
-	glm::vec2 pos;		//物理坐标 2维
-	glm::vec3 color;	//顶点颜色 RGB
+	//The coordinate of the vertex, 2 dimensional data
+	//顶点坐标 2维
+	glm::vec2 pos;
+	//The RGB color of attached with the vertex
+	//顶点颜色 RGB
+	glm::vec3 color;
 
+	/* Configure from where to acquire the vertex information */
 	//配置从何处获取顶点信息
 	static VkVertexInputBindingDescription getBindingDescription() {
-		VkVertexInputBindingDescription bindingDescription{};			//创建实例
-		bindingDescription.binding = 0;									//在 binding 数组中的索引
-		bindingDescription.stride = sizeof(Vertex);						//每个条目所占的字节数
-		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;		//每处理一个 vertex 数据之后移动一次顶点条目
+		//Create the instance regarding the description to bind the vertex
+		//创建实例
+		VkVertexInputBindingDescription bindingDescription{};
+		//Set the index of the binding in the array of binding to 0
+		//设置在 binding 数组中的索引
+		bindingDescription.binding = 0;
+		//Set the stride of the vertex data to the size of it
+		//设置每个顶点数据的步长，即每个顶点数据所占的字节数
+		bindingDescription.stride = sizeof(Vertex);
+		//Set the input rate to per vertex
+		//设置输入速率为每顶点一次
+		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-		return bindingDescription;										//返回实例
+		//Return the instance
+		//返回实例
+		return bindingDescription;										
 	}
 
-	//配置如何从顶点数据中提取属性
+	/* Configure how to extract attribute from the input data */
+	/* 配置如何从顶点数据中提取特征 */
 	static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
-		std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};	//创建顶点属性描述实例
-		//位置坐标数据
-		attributeDescriptions[0].binding = 0;							//位置坐标数据在第 0 个 binding
-		attributeDescriptions[0].location = 0;							//在位置 0
-		attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;		//数据类型是 2 个 32bit 有符号浮点数
-		attributeDescriptions[0].offset = offsetof(Vertex, pos);		//位置坐标数据占用的空间
-		//颜色数据
-		attributeDescriptions[1].binding = 0;							//颜色数据在第 0 个 binding
-		attributeDescriptions[1].location = 1;							//在位置 1
-		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;	//数据类型是 3 个 32bit 有符号浮点数
-		attributeDescriptions[1].offset = offsetof(Vertex, color);		//颜色数据占用的空间
+		//Construct an array with size 2 regarding to the VkVertexInputAttributeDescription
+		//创建能放下 2 个 VkVertexInputAttributeDescription 的顶点特征描述数组
+		std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
 
-		return attributeDescriptions;									//返回配置好的顶点属性描述实例
+		/* Coordinate data of the vertex */
+		/* 位置坐标数据 */
+
+		//The coordinate data sit on the binding 0
+		//位置坐标数据在第 0 个 binding
+		attributeDescriptions[0].binding = 0;
+		//At location 0
+		//在位置 0
+		attributeDescriptions[0].location = 0;
+		//The format of the data is 2 of 32bit signed float number
+		//数据类型是 2 个 32bit 有符号浮点数
+		attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+		//The offset of the coordinate data of the vertex is the size of the member variable: pos
+		//位置坐标数据占用的空间
+		attributeDescriptions[0].offset = offsetof(Vertex, pos);
+
+		/* Color data of the vertex */
+		/* 颜色数据 */
+
+		//The coordinate data sit on the binding 0
+		//颜色数据在第 0 个 binding
+		attributeDescriptions[1].binding = 0;
+		//At location 1
+		//在位置 1
+		attributeDescriptions[1].location = 1;
+		//The format of the data is 3 of 32bit signed float number
+		//数据类型是 3 个 32bit 有符号浮点数
+		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+		//The offset of the color data of the vertex is the size of the member variable: color
+		//颜色数据占用的空间
+		attributeDescriptions[1].offset = offsetof(Vertex, color);
+
+		//Return the attributeDescriptions instance
+		//返回配置好的顶点特征描述实例
+		return attributeDescriptions;
 	}
 };
 
+//The vertex data
 //顶点数据
 const std::vector<Vertex> vertices = {
-	{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},		//第一个顶点
-	{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},			//第二个顶点
-	{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}			//第三个顶点
+	//The first vertex data
+	//第一个顶点数据
+	{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+	//The second vertex data
+	//第二个顶点数据
+	{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+	//The third vertex data
+	//第三个顶点数据
+	{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}			
 };
 
+//
+//
 class HelloTriangleApplication {
 public:
 	void run() {
-
-		//初始化 GLFW
+		//Initialize the window
+		//初始化窗口
 		initWindow();
-		//初始化 Vulkan 对象
+		//Initialize all Vulkan objects
+		//初始化 Vulkan 的所有对象
 		initVulkan();
-		//直到窗口关闭终止
+		//The main loop, until the exit of the window
+		//主循环（直到窗口关闭终止）
 		mainLoop();
+		//Resource cleanup
 		//资源清理
 		cleanup();
 	}
 
 private:
-	//窗口句柄
+	//Create a GLFW window instance
+	//创建 1 个 GLFW 窗口实例
 	GLFWwindow* window;
 
-	//实例句柄
+	//Create a VkInstance instance
+	//创建 1 个 VkInstance 实例
 	VkInstance instance;
 	//存储回调函数信息
 	VkDebugUtilsMessengerEXT debugMessenger;
@@ -178,7 +280,9 @@ private:
 	//指令池，管理指令缓冲对象使用的内存并负责指令缓冲对象的分配
 	VkCommandPool commandPool;
 
+	//
 	VkBuffer vertexBuffer;
+	//
 	VkDeviceMemory vertexBufferMemory;
 
 	//存储指令缓冲对象
@@ -186,44 +290,66 @@ private:
 
 	//图像被获取，可以开始渲染的信号量
 	std::vector<VkSemaphore> imageAvailableSemaphores;
+
 	//渲染已经结果，可以开始呈现的信号量
 	std::vector<VkSemaphore> renderFinishedSemaphores;
+
 	//为每一帧创建栅栏，来进行 CPU 和 GPU 之间的同步
 	std::vector<VkFence> inFlightFences;
+
 	//追踪当前渲染的是哪一帧
 	uint32_t currentFrame = 0;
 
 	//标记窗口是否发生改变
 	bool framebufferResized = false;
 
+	/* 初始化窗口 */
 	void initWindow() {
-		//初始化 GLFW 窗口
+		//Initialize the GLFW library
+		//初始化 GLFW (Graphics Library FrameWork) 库
 		glfwInit();
 
-		//初始化 GLFW 库，GLFW_NO_API 显式地阻止自动创建 OpenGL 上下文
+		//Tell GLFW library explicitly not to create an OpenGL context 
+		//使用 GLFW_NO_API 显式地阻止 GLFW 自动创建 OpenGL 上下文
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
+		//Disable the resize of the window
 		//禁止窗口大小改变
 		//glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-		//存储创建的窗口句柄
+		//specify the width, height, title, and the monitor to open the window 
+		//存储创建的窗口句柄（窗口宽、窗口高、窗口名称、显示器序号）
 		window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+
+		//
 		//将 this 指针存储在 GLFW 窗口相关的数据中
 		glfwSetWindowUserPointer(window, this);
+
+		//
 		//设置处理窗口大小改变的回调函数
 		glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 	}
 
+	//
 	//静态函数才能用作回调函数
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
 		auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
 		app->framebufferResized = true;
 	}
 
-
+	/* Initialize all Vulkan objects */
+	/* 初始化 Vulkan 的所有对象 */
 	void initVulkan() {
+		//The instance is the connection between the application and the Vulkan library, creating it involves specifying some details about the application to the driver
+		//创建 Vulkan 实例，Vulkan 实例是应用和 Vulkan 库的桥梁，创建实例会涉及到应用程序到驱动的一些细节
 		createInstance();
+
+		//
+		//
 		setupDebugMessenger();
+
+		//
+		//
 		createSurface();
 		pickPhysicalDevice();
 		createLogicalDevice();
@@ -241,9 +367,12 @@ private:
 	void mainLoop() {
 		//窗口不关闭
 		while (!glfwWindowShouldClose(window)) {
-			//执行事件处理
+			//Loop and check for events like pressing the X button until the window has been closed by the user
+			//循环检测事件并处理，如是否按下了关闭按键等
 			glfwPollEvents();
-			//绘制三角形
+			
+			//
+			//绘制一帧
 			drawFrame();
 		}
 
@@ -295,15 +424,20 @@ private:
 			DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
 		}
 
+		//
 		//消除表面
 		vkDestroySurfaceKHR(instance, surface, nullptr);
-		//清除实例
+		
+		//Destroy the instance we created
+		//清除创建的实例
 		vkDestroyInstance(instance, nullptr);
 		
-		//清除窗口
+		//Destroy the window we created
+		//摧毁已创建的窗口
 		glfwDestroyWindow(window);
 		
-		// GLFW 停止
+		//Terminate GLFW
+		//终止 GLFW
 		glfwTerminate();
 	}
 
@@ -328,48 +462,98 @@ private:
 		createFramebuffers();
 	}
 
-	//创建实例
+	/* Create the Vulkan instance */
+	/* 创建 Vulkan 实例 */
 	void createInstance() {
-		//检查校验层
+		//Check if validation layers are supported
+		//检查是否支持校验层
 		if (enableValidationLayers && !checkValidationLayerSupport()) {
 			throw std::runtime_error("validation layers requested, but not available!");
 		}
 
-		//应用程序信息
+		/* Fill in the information to create the application */
+		/* 填入应用信息 */
+
+		//Construct a instance that holds information on how to create appInfo
+		//构造一个用于存储应用信息的实例
 		VkApplicationInfo appInfo{};
+		//Explicitly specify the structure type (for the support of p->next)
+		//明确指定结构的类型
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+		//Set the name of the application to "Hello Triangle"
+		//应用的名字为“Hello Triangle”
 		appInfo.pApplicationName = "Hello Triangle";
+		//Set the version of the application
+		//设置应用的版本
 		appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+		//Set the name of the engine to "No engine"
+		//设置引擎的名字为“No Engine”
 		appInfo.pEngineName = "No Engine";
+		//Set the version of the engine
+		//设置引擎的版本
 		appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+		//Set the version of the API
+		//设置 API 的版本
 		appInfo.apiVersion = VK_API_VERSION_1_0;
 
-		//所需全局扩展和校验层的结构体
+		/* Fill in the information used to create the Vulkan instance */
+		/* 填入用于创建 VkInstance 的信息 */
+
+		//Construct a instance that holds information on how to create VkInstance
+		//构造一个用于存储创建VulkanInstance所需信息的实例
 		VkInstanceCreateInfo createInfo{};
+
+		//Explicitly specify the structure type
+		//明确指定结构的类型
 		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+
+		//Refer the appInfo that we just created to fill in the VkInstance creation information
+		//引用刚刚创建的 appInfo 作为 VkInstance 创建的信息
 		createInfo.pApplicationInfo = &appInfo;
 		
-		//全局扩展
+		//Get the global extensions that is required by the instance
+		//获取实例所需的全局扩展
 		auto extensions = getRequiredExtensions();
+		//The enabled extension count is the size of the extension container
+		//启用的扩展的个数为 extension 容器的大小
 		createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+		//The name of the enabled extension are the data part of the extension container
+		//启用的扩展名字为 extension 容器的 data 部分
 		createInfo.ppEnabledExtensionNames = extensions.data();
 
+		/* Set the global validation layers */
+		/* 设置全局校验层 */
+		
+		//TODO
 		//创建回调函数创建信息指针作为 p next
 		VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
-		//全局校验层
+		//If the validation layers is enabled
+		//如果校验层被启用了
 		if (enableValidationLayers) {
+			//The enabled validation layer count is the size of the validation layer container
+			//启用的校验层的个数为 validation layer 容器的大小
 			createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+			//The name of the enabled validation layer are the data part of the validation layer container
+			//启用的校验层名字为 validation layer 容器的 data 部分
 			createInfo.ppEnabledLayerNames = validationLayers.data();
 
+			//
+			//
 			populateDebugMessengerCreateInfo(debugCreateInfo);
+			//
+			//
 			createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
 		} else {
+			//If the validation layer is not enabled, then the count of the validation layer will be 0
+			//如果没有启用校验层，则校验层的个数为 0
 			createInfo.enabledLayerCount = 0;
-
+			//p->next will be null pointer
+			//p->next 指向空指针
 			createInfo.pNext = nullptr;
 		}
 
-		//创建 Vulkan 实例
+		//Create the Vulkan instance with respect to the information above
+		//使用以上信息创建 Vulkan 实例
 		if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create instance!");
 		}
@@ -1359,49 +1543,84 @@ private:
 		return requiredExtensions.empty();
 	}
 
-	//根据是否启用校验层， 返回所需的扩展列表
+	/* Get the required extension */
+	/* 获取所需的扩展列表 */
 	std::vector<const char*> getRequiredExtensions() {
+		//Initialize the GLFW extension counter to 0
+		//初始化 GLFW 扩展计数器为 0
 		uint32_t glfwExtensionCount = 0;
+		//Initialize the GLFW extension
+		//初始化 GLFW extension
 		const char** glfwExtensions;
-		glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
+		//Using a built-in function to acquire the global extension desired by the instance
+		//使用内置的函数，来获取实例所需的全局扩展
+		glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+		//Put the GLFW extensions to the container
+		//将所有 GLFW 扩展放入容器中
 		std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
+		//If validation layer is enabled
+		//如果启用了校验层
 		if (enableValidationLayers) {
+			//Push back the debug utilities
+			//把校验层也放入容器中
 			extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 		}
 
+		//Return the extension container
+		//返回 extension 容器
 		return extensions;
 	}
 
-	//检查配置的校验层是否被支持
+	//Check if the validation layers that we would like to use are all supported
+	//检查配置的校验层是否全被支持
 	bool checkValidationLayerSupport() {
-		//获取所有可用的校验层列表
+		//Initialize the counter
+		//初始化计数器
 		uint32_t layerCount;
+		//Get the count of the validation layers available
+		//获取可用的校验层的数目
 		vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
+		//Create a availableLayers container with the size regarding the layerCount
+		//创建大小为 layerCount 的容器
 		std::vector<VkLayerProperties> availableLayers(layerCount);
+		//Get the details of the validation layers available using the same function
+		//使用相同的函数获取校验层的细节，保存在创建的 availableLayers 容器中
 		vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
+		//Check if all the validation layers that we desired are avail in the available validation layers
 		//检查是否所有 validationLayers 列表中的校验层可以在 availableLayers 中找到
 		for (const char* layerName : validationLayers) {
+			//Initialize the FOUND flag with false
+			//将标志位设置为 false
 			bool layerFound = false;
 
+			//Iterate through all the validation layers available
+			//遍历所有的可用校验层
 			for (const auto& layerProperties : availableLayers) {
+				//Check if the regarding validation layers is available through string comparison
+				//通过字符串比较的方式查看校验层是否可用
 				if (strcmp(layerName, layerProperties.layerName) == 0) {
+					//If the validation layer has been found, break
+					//如果想要找的校验层找到了，break
 					layerFound = true;
 					break;
 				}
 			}
-
+			//If a validation layer is NOT found, return false
+			//如果至少有一个校验层没有找到，返回 false
 			if (!layerFound) {
 				return false;
 			}
 		}
-
+		//If all validation layers are found, return true
+		//如果所有的校验层都被找到了，返回 true
 		return true;
 	}
 
+	//Helper function to read file content
 	//载入二进制文件的辅助函数
 	static std::vector<char> readFile(const std::string& filename) {
 		// ate 从文件尾部开始读取，binary 以二进制形式读取文件
@@ -1433,14 +1652,23 @@ private:
 };
 
 int main() {
+	//Construct the HelloTriangleApplication instance named app
+	//创建 HelloTriangleApplication 实例，命名为 app
 	HelloTriangleApplication app;
 
+	//尝试 run 上面这个实例，并捕捉标准异常
+	//Try to run the app while catching the errors
 	try {
 		app.run();
 	} catch (const std::exception& e) {
+		//如果有异常，就把异常的内容输出
+		//If there were error, then we use output it through standard output
 		std::cerr << e.what() << std::endl;
+		//Return code of failure if there were failure
+		//有异常则返回值为失败
 		return EXIT_FAILURE;
 	}
-
+	//Return code for peace out
+	//无异常则返回值为成功
 	return EXIT_SUCCESS;
 }
