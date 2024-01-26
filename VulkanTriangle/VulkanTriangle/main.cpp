@@ -33,6 +33,7 @@ const std::vector<const char*> deviceExtensions = {
 	VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
+//C++ NDEBUG 宏定义
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
 #else
@@ -79,40 +80,44 @@ struct SwapChainSupportDetails {
 	std::vector<VkPresentModeKHR> presentModes;
 };
 
+//顶点数据结构体
 struct Vertex {
-	glm::vec2 pos;
-	glm::vec3 color;
+	glm::vec2 pos;		//物理坐标 2维
+	glm::vec3 color;	//顶点颜色 RGB
 
+	//配置从何处获取顶点信息
 	static VkVertexInputBindingDescription getBindingDescription() {
-		VkVertexInputBindingDescription bindingDescription{};
-		bindingDescription.binding = 0;
-		bindingDescription.stride = sizeof(Vertex);
-		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+		VkVertexInputBindingDescription bindingDescription{};			//创建实例
+		bindingDescription.binding = 0;									//在 binding 数组中的索引
+		bindingDescription.stride = sizeof(Vertex);						//每个条目所占的字节数
+		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;		//每处理一个 vertex 数据之后移动一次顶点条目
 
-		return bindingDescription;
+		return bindingDescription;										//返回实例
 	}
 
+	//配置如何从顶点数据中提取属性
 	static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
-		std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+		std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};	//创建顶点属性描述实例
+		//位置坐标数据
+		attributeDescriptions[0].binding = 0;							//位置坐标数据在第 0 个 binding
+		attributeDescriptions[0].location = 0;							//在位置 0
+		attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;		//数据类型是 2 个 32bit 有符号浮点数
+		attributeDescriptions[0].offset = offsetof(Vertex, pos);		//位置坐标数据占用的空间
+		//颜色数据
+		attributeDescriptions[1].binding = 0;							//颜色数据在第 0 个 binding
+		attributeDescriptions[1].location = 1;							//在位置 1
+		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;	//数据类型是 3 个 32bit 有符号浮点数
+		attributeDescriptions[1].offset = offsetof(Vertex, color);		//颜色数据占用的空间
 
-		attributeDescriptions[0].binding = 0;
-		attributeDescriptions[0].location = 0;
-		attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
-		attributeDescriptions[0].offset = offsetof(Vertex, pos);
-
-		attributeDescriptions[1].binding = 0;
-		attributeDescriptions[1].location = 1;
-		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescriptions[1].offset = offsetof(Vertex, color);
-
-		return attributeDescriptions;
+		return attributeDescriptions;									//返回配置好的顶点属性描述实例
 	}
 };
 
+//顶点数据
 const std::vector<Vertex> vertices = {
-	{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-	{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-	{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+	{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},		//第一个顶点
+	{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},			//第二个顶点
+	{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}			//第三个顶点
 };
 
 class HelloTriangleApplication {
@@ -716,14 +721,16 @@ private:
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
+		//获取顶点数据的绑定信息
 		auto bindingDescription = Vertex::getBindingDescription();
+		//获取顶点数据中的属性
 		auto attributeDescriptions = Vertex::getAttributeDescriptions();
 
 		//两个 Descriptions 用于描述顶点数据组织信息的结构体数据
-		vertexInputInfo.vertexBindingDescriptionCount = 1;
-		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-		vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-		vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+		vertexInputInfo.vertexBindingDescriptionCount = 1;														//输入顶点的绑定个数为 1
+		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());	//输入顶点的属性的大小为相应的大小，也就是 2
+		vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;										//引用顶点数据绑定的描述，使其作为顶点输入阶段的输入配置
+		vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();							//将顶点的属性作为顶点输入阶段的输入属性
 
 		//输入装配
 		//下面这个结构体描述：顶点数据定义哪种类型的几何图元，以及是否启用几何图元重启
@@ -884,47 +891,74 @@ private:
 		}
 	}
 
+	/* 创建顶点数组 */
 	void createVertexBuffer() {
-		VkBufferCreateInfo bufferInfo{};
-		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bufferInfo.size = sizeof(vertices[0]) * vertices.size();
-		bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		VkBufferCreateInfo bufferInfo{};							//构造一个用于存储 buffer 创建信息的实例
+		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;	//指定 sType
+		bufferInfo.size = sizeof(vertices[0]) * vertices.size();	//指定创建 buffer 的大小
+		bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;		//指定这个 buffer 会被用作顶点数据的 buffer
+		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;			//不将 buffer 共享给其他的 queue，因为目前只有 Graphics queue
 
+		//使用上面的信息创建 buffer
 		if (vkCreateBuffer(device, &bufferInfo, nullptr, &vertexBuffer) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create vertex buffer!");
 		}
 
+		/** 为刚刚创建的顶点数组分配内存 **/
+		/* 获取 buffer 对内存的需求 */
+		//构造一个用于存储内存需求的实例
 		VkMemoryRequirements memRequirements;
+		//询问顶点数据 buffer 对于内存的需求
 		vkGetBufferMemoryRequirements(device, vertexBuffer, &memRequirements);
 
+		//构造一个用于存储内存分配信息的实例
 		VkMemoryAllocateInfo allocInfo{};
+		//指定 sType
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		//分配内存为顶点数组所需 buffer 的大小
 		allocInfo.allocationSize = memRequirements.size;
+		//配置存储属性的索引号为满足需求的索引号：需要能映射到 CPU 的地址空间所以 CPU 可以直接写并且对 CPU 是有一致性的
+		//VK_MEMORY_PROPERTY_HOST_COHERENT_BIT: indicate the memory heap is host coherent, which ensures that the mapped memory always matches the contents of the allocated memory,
+		//		and the driver will be aware of our writes to the buffer
 		allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
+		//按照如上配置的信息为顶点数组分配存储空间
 		if (vkAllocateMemory(device, &allocInfo, nullptr, &vertexBufferMemory) != VK_SUCCESS) {
 			throw std::runtime_error("failed to allocate vertex buffer memory!");
 		}
 
+		//将分配的存储空间与顶点数组绑定在一起
+		//Associate this memory with the buffer
 		vkBindBufferMemory(device, vertexBuffer, vertexBufferMemory, 0);
 
+		//定义一个空类型的指针用于寻址
 		void* data;
+		//将刚刚分配出来的顶点内存映射到 data 指针上
 		vkMapMemory(device, vertexBufferMemory, 0, bufferInfo.size, 0, &data);
-			memcpy(data, vertices.data(), (size_t)bufferInfo.size);
+		//将顶点数据拷贝到 data 所指向的内存中
+		memcpy(data, vertices.data(), (size_t)bufferInfo.size);
+		//释放 data 对顶点内存的映射
 		vkUnmapMemory(device, vertexBufferMemory);
 	}
 
+	/* 寻找存储的类型 */
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+		//构造一个用于存储 存储属性信息的 实例（包含存储类型和存储堆）
+		//The VkPhysicalDeviceMemoryProperties structure has two arrays: memoryTypes and memoryHeaps.
+		//Memory heaps are distinct memory resources like dedicated VRAM and swap space in RAM for when VRAM runs out. The different types of memory exist within these heaps.
 		VkPhysicalDeviceMemoryProperties memProperties;
+		//获取显卡所支持的存储属性
 		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
 
+		//对于每一个获取到的存储属性
 		for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+			//如果（找到了我们想要的存储类型）并且（在属性列表中找到了想要寻找的存储属性）
 			if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+				//返回这个存储属性的索引号
 				return i;
 			}
 		}
-
+		//如果没找到想要的存储属性，就抛出一个异常
 		throw std::runtime_error("failed to find suitable memory type!");
 
 	}
@@ -974,7 +1008,7 @@ private:
 		//VK_SUBPASS_CONTENTS_INLINE 指的是指令只在主要指令缓冲，没有辅助指令缓冲
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 			
-			//绑定图形管线
+			//将这个 command buffer 绑定到已创建那个图形管线
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
 			//定义视口
@@ -991,11 +1025,14 @@ private:
 			VkRect2D scissor{};
 			scissor.offset = { 0, 0 };
 			scissor.extent = swapChainExtent;
-			//TODO；？？
+			//TODO:？？
 			vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
+			//需要绑定的 buffer 包括哪些
 			VkBuffer vertexBuffers[] = { vertexBuffer };
+			//需要绑定的 buffer 所对应的 offset 有哪些
 			VkDeviceSize offsets[] = { 0 };
+			//将 vertexbuffer 绑定到 binding：从第 0 个 binding 位置起，绑定 1 个 binding，绑定的 buffer 是 vertexbuffers，从 vertexbuffer 的 offsets 的位置开始读
 			vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
 			//绘制三角形，提交绘制操作到指令缓冲
