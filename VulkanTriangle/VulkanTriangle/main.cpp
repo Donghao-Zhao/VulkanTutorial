@@ -1,15 +1,15 @@
 ﻿/* Author Donghao Zhao */
 
-//
-//
+// Seems here for surface creation
+// 貌似是用来创建窗口表面的
 #define GLFW_INCLUDE_VULKAN
 
-//
-//
+// Seems here for surface creation
+// 貌似是用来创建窗口表面的
 #include <GLFW/glfw3.h>
 
-//
-//
+// Seems here for surface creation
+// 貌似是用来创建窗口表面的
 #include <glm/glm.hpp>
 
 // Input and output library, necessary for input and output operation
@@ -52,8 +52,8 @@
 // array 库
 #include <array>
 
-// ?
-// ？
+// To support std::optional<uint32_t>
+// 支持 std::optional<uint32_t>
 #include <optional>
 
 // Set library
@@ -71,33 +71,36 @@ const uint32_t WIDTH = 800;
 // 窗口的高
 const uint32_t HEIGHT = 600;
 
+// 
 // 可以同时并行处理的帧数
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
-// The validation layers that we would like to enable
-// 要启用的校验层
+/* The validation layers that we would like to enable */
+/* 要启用的校验层 */
 const std::vector<const char*> validationLayers = {
 	// All useful standard validation layers
 	// 所有的标准校验层
 	"VK_LAYER_KHRONOS_validation"
 };
 
-// The device extensions we desired
-// 所需的设备扩展
+/* The device extensions we desired */
+/* 所需的设备扩展 */
 const std::vector<const char*> deviceExtensions = {
+	// Swap chain extension
+	// 交换链扩展
 	VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
-// Enable validation with respect to the NDEBUG C++ standard macro
-// 根据 C++ NDEBUG 宏定义来确定是否启用校验层
+/* Enable validation with respect to the NDEBUG C++ standard macro */
+/* 根据 C++ NDEBUG 宏定义来确定是否启用校验层 */
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
 #else
 const bool enableValidationLayers = true;
 #endif
 
-// Helper function to create the debugMessenger object
-// 创建 debugMessenger 对象
+/* Helper function to create the debugMessenger object */
+/* 创建 debugMessenger 对象 */
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
 	// An extension function will not be automatically loaded, so use vkGetInstanceProcAddr to look up its address, and create a proxy function to do the labor
 	// Vulkan 扩展中的函数不会被 Vulkan 库自动加载，所以需要借助 vkGetInstanceProcAddr 找到函数的地址，然后创建代理函数来载入创建函数 vkCreateDebugUtilsMessengerEXT
@@ -119,8 +122,8 @@ VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMes
 	}
 }
 
-// Helper function to destroy the debugMessenger object
-// 摧毁 debugMessenger 对象
+/* Helper function to destroy the debugMessenger object */
+/* 摧毁 debugMessenger 对象 */
 void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
 	// Get the address of the vkDestroyDebugUtilsMessengerEXT extension function
 	// 找到 vkDestroyDebugUtilsMessengerEXT 扩展函数的地址
@@ -134,14 +137,24 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 	}
 }
 
-// 
-// 队列族结构体
-struct QueueFamilyIndices {
-	// 支持绘制指令的队列族
-	std::optional<uint32_t> graphicsFamily;
-	// 支持表现的队列族
-	std::optional<uint32_t> presentFamily;
 
+/* The queue family that the physical device should support */
+/* 物理设备需要支持的队列族 */
+// Each family of queues allows only a subset of commands
+// 每一个队列族只允许一部分命令
+struct QueueFamilyIndices {
+	// Any value of uint32_t could in theory be a valid queue family index including 0, so we use std::optional
+	// std::optional is a wrapper that contains no value until you assign something to it
+	// std::optional 是一个 wrapper，直到赋值之后才真的有值
+	// Queue family to support graphics commands
+	// 支持图形指令的队列族
+	std::optional<uint32_t> graphicsFamily;
+	// Present family to support present the image to the surface
+	// 支持展示的队列族
+	std::optional<uint32_t> presentFamily;
+	
+	// Check if <uint32_t> container really has a value or not
+	// 检查 <uint32_t> 容器里的条目是否真的有值
 	bool isComplete() {
 		return graphicsFamily.has_value() && presentFamily.has_value();
 	}
@@ -279,20 +292,24 @@ private:
 	// 创建调试信使句柄，EXT 是扩展的意思
 	VkDebugUtilsMessengerEXT debugMessenger;
 
-	// 
-	// 窗口表面
+	// Window surface is an abstract type of surface to present rendered images to
+	// 窗口表面是一个用来展示图片的抽象的类型
 	VkSurfaceKHR surface;
 
 	// Physical device object, destroy itself when VkInstance is destroyed
 	// 物理显卡对象。会在 VkInstance 被摧毁时自动摧毁自己
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-	// 
+	// Logical device, as the interface to the physical device
 	// 逻辑设备，作为与物理设备交互的接口
 	VkDevice device;
 
-	// 存储逻辑设备的队列句柄，会随着逻辑设备的清楚而自动清楚
+	// Queue handle, automatically being destroyed when the device is destroyed
+	// 存储逻辑设备的队列句柄，会随着逻辑设备的摧毁而自动摧毁
+	// The graphics queue handles
+	// 图形队列的句柄
 	VkQueue graphicsQueue;
-	// 呈现队列句柄
+	// The present queue handles
+	// 展示队列的句柄
 	VkQueue presentQueue;
 
 	// 存储交换链
@@ -381,16 +398,20 @@ private:
 		// The instance is the connection between the application and the Vulkan library, creating it involves specifying some details about the application to the driver
 		// 创建 Vulkan 实例，Vulkan 实例是应用和 Vulkan 库的桥梁，创建实例会涉及到应用程序到驱动的一些细节
 		createInstance();
-		// // Setup debug messenger
+		// Setup debug messenger
 		// 初始化调试信使
 		setupDebugMessenger();
-		// 
-		// 
+		/* Create window surface */
+		/* 创建窗口表面 */
 		createSurface();
 		// Select a graphics card in the system that support the features we need
 		// 从系统中选出一个支持我们想要的特性的显卡
 		pickPhysicalDevice();
+		// Set up a logical device to interface with the physical device
+		// 创建逻辑设备，作为用来与物理设备进行交互的接口
 		createLogicalDevice();
+		// Create swap chain, a queue of images that are waiting to be presented to the screen
+		// 创建交换链，交换链是一组正在等待被送往显示器显示的图片
 		createSwapChain();
 		createImageViews();
 		createRenderPass();
@@ -402,8 +423,11 @@ private:
 		createSyncObjects();
 	}
 
+	/* The main loop */
+	/* 主循环 */
 	void mainLoop() {
-		// 窗口不关闭
+		// If the window should be closed?
+		// 检测窗口是否需要关闭
 		while (!glfwWindowShouldClose(window)) {
 			// Loop and check for events like pressing the X button until the window has been closed by the user
 			// 循环检测事件并处理，如是否按下了关闭按键等
@@ -414,6 +438,7 @@ private:
 			drawFrame();
 		}
 
+		//
 		// 等待逻辑设备操作结束执行时才销毁窗口
 		vkDeviceWaitIdle(device);
 	}
@@ -424,7 +449,7 @@ private:
 			vkDestroyFramebuffer(device, swapChainFramebuffers[i], nullptr);
 		}
 		
-		// 清楚图像视图
+		// 摧毁图像视图
 		for (size_t i = 0; i < swapChainImageViews.size(); i++) {
 			vkDestroyImageView(device, swapChainImageViews[i], nullptr);
 		}
@@ -462,8 +487,8 @@ private:
 			DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
 		}
 
-		// 
-		// 摧毁表面
+		// Destroy window surface
+		// 摧毁窗口表面
 		vkDestroySurfaceKHR(instance, surface, nullptr);
 		
 		// Destroy the instance we created
@@ -602,24 +627,8 @@ private:
 		}
 	}
 
-	/*
-	// 获取扩展信息
-	// 获取扩展数量
-	uint32_t extensionCount = 0;
-	vkEnumerateinstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-	// 存储扩展信息
-	std::vector<VkExtensionProperties> Extensions(extensionCount);
-	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, Extensions.data());
-	std::cout << "available extensions:" << std::endl;
-
-	for (const auto& extension : Extensions)
-	{
-		std::cout << "\t" << extension.extensionName << std::endl;
-	}
-	*/
-
-	// Construct the information for creating the debug messenger
-	// 构造调试信使的创建信息
+	/* Construct the information for creating the debug messenger */
+	/* 构造调试信使的创建信息 */
 	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
 		// Empty the createInfo, don't know why for now
 		// 清空 createInfo，目前还不知道为什么要清空
@@ -638,16 +647,18 @@ private:
 		createInfo.pfnUserCallback = debugCallback;
 	}
 
-	//  窗口表面
+	/* Create window surface */
+	/* 创建窗口表面 */
 	void createSurface() {
+		// The following function has a different implementation for each platform
 		// 下面这个函数是跨平台的
 		if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create window surface!");
 		}
 	}
 
-	// Setup debug messenger
-	// 初始化调试信使
+	/* Setup debug messenger */
+	/* 初始化调试信使 */
 	void setupDebugMessenger() {
 		// If the validation layers is NOT enabled, return immediately
 		// 如果校验没有被启用，跳过此初始化
@@ -769,63 +780,96 @@ private:
 	//	return score;
 	//}
 
-	// 
-	// 逻辑设备和队列
+	// Create the logical device
+	// 创建逻辑设备
 	void createLogicalDevice() {
+		// Search for and return the queue family index we desired
+		// 查找并返回需求的队列族的索引
 		QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 
-		// 创建所有使用的队列族
+		// Create a container used to store all the queue creation information
+		// 创建用来存储所有的队列创建信息的容器
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+		// Create a set for queue family, and initialize with the value(index) of graphicsFamily and presentFamily
 		// 创建每一个不同的队列族
 		std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };
 
+		// Assign priorities to queues to influence the scheduling of command buffer execution
+		// 通过赋予队列优先级的方式来影响命令缓冲的执行顺序
 		float queuePriority = 1.0f;
 		for (uint32_t queueFamily : uniqueQueueFamilies) {
-			// 该结构体描述了针对一个队列族所需队列数量
+			// Construct a instance that describes the number of queues we want for a single queue family
+			// 创建一个实例，用来描述针对一个队列族所需队列的数量
 			VkDeviceQueueCreateInfo queueCreateInfo{};
 			// Explicitly specify the structure type
 			// 明确指定结构的类型
 			queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+			// The queue family index desired is the one we chose
+			// 队列族的索引是我们选择的那个可以满足需求的索引
 			queueCreateInfo.queueFamilyIndex = queueFamily;
+			// The queue count is 1
+			// 队列数目为 1
 			queueCreateInfo.queueCount = 1;
-			// 优先级控制指令缓冲的执行顺序
+			// The priority of the queue
+			// 队列的优先级
 			queueCreateInfo.pQueuePriorities = &queuePriority;
+			// Push back the information regarding the creation of the queue
+			// 将每个队列的创建信息放入队列族容器中
 			queueCreateInfos.push_back(queueCreateInfo);
 		}
 
-		// 指定应用程序使用的设备特性
+		// Specify the device features we need, empty for now
+		// 指定应用程序使用的设备特性，目前为空
 		VkPhysicalDeviceFeatures deviceFeatures{};
 
-		// 创建逻辑设备
+		// Information to create a logical device
+		// 用于创建逻辑设备的信息
 		VkDeviceCreateInfo createInfo{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
 		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
+		// Specify the count of the creation information of the queue
+		// 指定需要创建多少个队列
 		createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+		// Specify the information for the creation of the queue
+		// 指定用于创建队列的信息
 		createInfo.pQueueCreateInfos = queueCreateInfos.data();
-
+		// Specify the device features we need
+		// 指定我们需要的设备特性
 		createInfo.pEnabledFeatures = &deviceFeatures;
 
-		// 启用交换链扩展
+		// The enabled extension count is the size of the deviceExtensions container
+		// 启用的设备扩展的个数是 deviceExtensions 的大小
 		createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
+		// The name of the enabled extension is the data field of the deviceExtensions
+		// 启用的设备扩展的名字是 deviceEntensions 的 data 部分
 		createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
-		// 设备和实例使用相同的校验层，不需要额外的扩展支持
+		// Set validation layers for device as same as the instances is supported by Vulkan
+		// 现在 Vulkan 支持设置 设备和实例使用相同的校验层
 		if (enableValidationLayers) {
+			// Set the count of the validation layers to be enable
+			// 设置需要被启用的校验层的个数
 			createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+			// Set the name of the validation layer
+			// 设置校验层的名字
 			createInfo.ppEnabledLayerNames = validationLayers.data();
 		} else {
 			createInfo.enabledLayerCount = 0;
 		}
 
-		// 之前把启用交换链扩展这两行代码放在 vkCreateDevice 下面了，导致我的虚拟设备没有开交换链扩展，所以后面创建交换链扩展时一直创建失败
+		// Use the information above to create the logical device
+		// 使用以上信息创建逻辑设备
 		if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create logical device!");
 		}
 
-		// 获取指定队列族的队列句柄
+		// Retrieving the graphics queue handles
+		// 取回图形队列的句柄
 		vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+		// Retrieving the present queue handles
+		// 取回展示队列的句柄
 		vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
 	}
 
@@ -1655,11 +1699,11 @@ private:
 		return details;
 	}
 
-	// Check if the physical device is suitable for our desire
-	// 检查获取的物理设备是否满足我们的需求
+	/* Check if the physical device is suitable for our desire */
+	/* 检查获取的物理设备是否满足我们的需求 */
 	bool isDeviceSuitable(VkPhysicalDevice device) {
-		// 
-		// 
+		// Search for and return the queue family index we desired
+		// 查找并返回需求的队列族的索引
 		QueueFamilyIndices indices = findQueueFamilies(device);
 
 		// Check if the physical device can support the desired extension
@@ -1685,61 +1729,91 @@ private:
 		return indices.isComplete() && extensionsSupported && swapChainAdequate;
 	}
 
-	// 
-	// 查找并返回需求的队列族的索引
+	/* Search for and return the queue family index we desired */
+	/* 查找并返回需求的队列族的索引 */
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
+		// Construct the instance that hold information of queue family index
+		// 构造一个用于存储 队列族索引 的实例
 		QueueFamilyIndices indices;
 		
-		// 获取设备队列族个数
+		// Get the count of the queueFamily that the physical device support
+		// 获取物理设备所支持的队列族的个数
 		uint32_t queueFamilyCount = 0;
 		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
 
-		// 存储队列族的 Properties
+		// Create a container to store the properties of the queue family, with the size queueFamilyCount
+		// 基于物理设备所支持的队列族的个数，创建存储队列族的容器
 		std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+
+		// Get the queue family that the physical device support, and store them in the container
+		// 获取物理设备所支持的队列族，并将他们保存在 queueFamilies 容器中
 		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
 
 		// 队列族包含很多信息，如支持的操作类型、该队列族可创建的队列个数
-		// 找到一个支持的队列族
+		// Iterate through the queueFamilies to find out a queue family index we desired
+		// 遍历 queueFamilies 来找到满足需求的队列族
 		int i = 0;
 		for (const auto& queueFamily : queueFamilies) {
-			// 支持绘制指令的队列族索引
+			// Find the queue family index whose queue flag has the VK_QUEUE_GRAPHICS_BIT
+			// 寻找队列标志位包含 VK_QUEUE_GRAPHICS_BIT 的队列族
 			if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
 				indices.graphicsFamily = i;
 			}
 
-			// 支持表现的队列族索引
+			// Check if the physical device support present
+			// 检查设备是否支持展示
 			VkBool32 presentSupport = false;
 			vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
 
+			// If the present support is supported, give the index value to the presentFamily field
+			// 如果该队列族支持展示功能，则将索引值赋给 presentFamily
 			if (presentSupport) {
 				indices.presentFamily = i;
 			}
 
+			// If a physical device satisfy the two desires above, break the loop
+			// 如果物理设备满足上面的需求，跳出循环
 			if (indices.isComplete()) {
 				break;
 			}
 
+			// Increase the iterator
+			// 增加迭代器的值
 			i++;
 		}
 
+		// Return the index
+		// 返回索引
 		return indices;
 	}
 
-	// 检测所需的设备扩展
+	/* Check if the device extension is supported */
+	/* 检测是否支持所需的设备扩展 */
 	bool checkDeviceExtensionSupport(VkPhysicalDevice device) {
+		// Get the count of the device extension supported
+		// 获取可用的设备扩展的个数
 		uint32_t extensionCount;
 		vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
 
+		// Create a container to store the properties of the device extension, with the size of extensionCount
+		// 基于可用的设备扩展的个数，创建存储设备扩展的容器
 		std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+		// Get the device extension that the device support, and store them in the container
+		// 获取设备所支持的所有可用的设备扩展，并将他们保存在 availableExtensions 容器中
 		vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
 
+		// Initialize a set of strings with the deviceExtensions as the content
+		// 使用所需设备扩展的内容创建一个几何
 		std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
 
-		// 枚举所有可用的扩展，从我们需要的集合中剔除，如果集合空了，说明可用的扩展可以覆盖我们的需求
+		// For the each extensions available, earse the same name in the requiredExtension set
+		// 对于每一个可用的扩展，将所需扩展容器中的同名项剔除
 		for (const auto& extension : availableExtensions) {
 			requiredExtensions.erase(extension.extensionName);
 		}
 
+		// If the set is empty, that means the available extensions can cover the desired extensions
+		// 如果集合空了，说明可用的扩展可以覆盖我们的需求
 		return requiredExtensions.empty();
 	}
 
