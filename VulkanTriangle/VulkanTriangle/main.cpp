@@ -149,8 +149,8 @@ struct QueueFamilyIndices {
 	// Queue family to support graphics commands
 	// 支持图形指令的队列族
 	std::optional<uint32_t> graphicsFamily;
-	// Present family to support present the image to the surface
-	// 支持展示的队列族
+	// Queue family to support present the image to the surface
+	// 支持呈现的队列族
 	std::optional<uint32_t> presentFamily;
 	
 	// Check if <uint32_t> container really has a value or not
@@ -160,18 +160,22 @@ struct QueueFamilyIndices {
 	}
 };
 
-// 交换链细节信息
+/* Details of swap chain support */
+/* 需要支持的交换链细节信息 */
 struct SwapChainSupportDetails {
+	// Basic surface capabilities (min/max number of images in swap chain, min/max width and height of images)
 	// 基础表面特性（交换链最小最大图像数量，最小最大图像宽高）
 	VkSurfaceCapabilitiesKHR capabilities;
+	// Surface formats (pixel format, color space)
 	// 表面格式（像素格式，颜色空间）
 	std::vector<VkSurfaceFormatKHR> formats;
+	// Available presentation modes
 	// 可用的呈现模式
 	std::vector<VkPresentModeKHR> presentModes;
 };
 
-// The vertex structure
-// 顶点数据结构体
+/* The vertex structure */
+/* 顶点数据结构体 */
 struct Vertex {
 	// The coordinate of the vertex, 2 dimensional data
 	// 顶点坐标 2维
@@ -181,7 +185,7 @@ struct Vertex {
 	glm::vec3 color;
 
 	/* Configure from where to acquire the vertex information */
-	// 配置从何处获取顶点信息
+	/* 配置从何处获取顶点信息 */
 	static VkVertexInputBindingDescription getBindingDescription() {
 		// Create the instance regarding the description to bind the vertex
 		// 创建实例
@@ -246,8 +250,8 @@ struct Vertex {
 	}
 };
 
-// The vertex data
-// 顶点数据
+/* The vertex data */
+/* 顶点数据 */
 const std::vector<Vertex> vertices = {
 	// The first vertex data
 	// 第一个顶点数据
@@ -260,8 +264,8 @@ const std::vector<Vertex> vertices = {
 	{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}			
 };
 
-// The HelloTriangleApplication class
-// HelloTriangleApplication 类
+/* The HelloTriangleApplication class */
+/* HelloTriangleApplication 类 */
 class HelloTriangleApplication {
 public:
 	void run() {
@@ -293,7 +297,7 @@ private:
 	VkDebugUtilsMessengerEXT debugMessenger;
 
 	// Window surface is an abstract type of surface to present rendered images to
-	// 窗口表面是一个用来展示图片的抽象的类型
+	// 窗口表面是一个用来呈现图片的抽象的类型
 	VkSurfaceKHR surface;
 
 	// Physical device object, destroy itself when VkInstance is destroyed
@@ -303,41 +307,49 @@ private:
 	// 逻辑设备，作为与物理设备交互的接口
 	VkDevice device;
 
-	// Queue handle, automatically being destroyed when the device is destroyed
-	// 存储逻辑设备的队列句柄，会随着逻辑设备的摧毁而自动摧毁
+	/* Queue handle, automatically being destroyed when the device is destroyed */
+	/* 逻辑设备的队列句柄，会随着逻辑设备的摧毁而自动摧毁 */
 	// The graphics queue handles
 	// 图形队列的句柄
 	VkQueue graphicsQueue;
-	// The present queue handles
-	// 展示队列的句柄
+	// The presentation queue handles
+	// 呈现队列的句柄
 	VkQueue presentQueue;
 
-	// 存储交换链
+	// The swap chain handler
+	// 交换链句柄
 	VkSwapchainKHR swapChain;
-	// 存储图像句柄
+	// The images in the swap chain
+	// 交换链图像句柄
 	std::vector<VkImage> swapChainImages;
-	// 存储交换链图像格式
+	// The format of the image in swap chain
+	// 交换链图像格式
 	VkFormat swapChainImageFormat;
-	// 存储交换链图像范围
+	// The extent of the swap chain
+	// 交换链图像范围
 	VkExtent2D swapChainExtent;
-	// 存储图像视图
+	// The image view container
+	// 图像视图容器
 	std::vector<VkImageView> swapChainImageViews;
-	// 存储所有帧缓冲对象
+	// 
+	// 所有帧缓冲对象
 	std::vector<VkFramebuffer> swapChainFramebuffers;
 
-	// 存储渲染流程
+	// 渲染流程
 	VkRenderPass renderPass;
-	// 存储 Layout
+	// 图形管线的布局
 	VkPipelineLayout pipelineLayout;
-	// 存储管线对象
+	// 管线对象
 	VkPipeline graphicsPipeline;
 
 	// 指令池，管理指令缓冲对象使用的内存并负责指令缓冲对象的分配
 	VkCommandPool commandPool;
 
-	// 
+	// The vertex buffer
+	// 顶点数组
 	VkBuffer vertexBuffer;
-	// 
+	// The memory allocated to the vertex buffer
+	// 分配给顶点数组的内存
 	VkDeviceMemory vertexBufferMemory;
 
 	// 存储指令缓冲对象
@@ -358,6 +370,7 @@ private:
 	// 标记窗口是否发生改变
 	bool framebufferResized = false;
 
+	/* Initialize the window */
 	/* 初始化窗口 */
 	void initWindow() {
 		// Initialize the GLFW library
@@ -385,8 +398,8 @@ private:
 		glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 	}
 
-	// 
-	// 静态函数才能用作回调函数
+	/*  */
+	/* 静态函数才能用作回调函数 */
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
 		auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
 		app->framebufferResized = true;
@@ -413,8 +426,14 @@ private:
 		// Create swap chain, a queue of images that are waiting to be presented to the screen
 		// 创建交换链，交换链是一组正在等待被送往显示器显示的图片
 		createSwapChain();
+		// Create image view, which describes how to access the image and which part of the image to access
+		// 创建图像视图，它描述了如何访问图像以及要访问图像的哪一部分
 		createImageViews();
+		// 
+		// 
 		createRenderPass();
+		// Create a graphics pipeline
+		// 创建图形管线
 		createGraphicsPipeline();
 		createFramebuffers();
 		createCommandPool();
@@ -438,36 +457,50 @@ private:
 			drawFrame();
 		}
 
-		//
+		// 
 		// 等待逻辑设备操作结束执行时才销毁窗口
 		vkDeviceWaitIdle(device);
 	}
 
+	/* Destroy the resources related with swap chain */
+	/* 摧毁与交换链相关的资源 */
 	void cleanupSwapChain() {
+		// 
 		// 消除帧缓冲
-		for (size_t i = 0; i < swapChainFramebuffers.size(); i++) {
-			vkDestroyFramebuffer(device, swapChainFramebuffers[i], nullptr);
+		for (auto framebuffer : swapChainFramebuffers) {
+			vkDestroyFramebuffer(device, framebuffer, nullptr);
 		}
 		
-		// 摧毁图像视图
-		for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-			vkDestroyImageView(device, swapChainImageViews[i], nullptr);
+		// Destroy all image views
+		// 摧毁所有图像视图
+		for (auto imageView : swapChainImageViews) {
+			vkDestroyImageView(device, imageView, nullptr);
 		}
 
-		// 清除交换链
+		// Destroy the swap chain
+		// 摧毁交换链
 		vkDestroySwapchainKHR(device, swapChain, nullptr);
 	}
 
+	/* Destroy the resources requested before the end of the program */
+	/* 程序结束前摧毁创建的资源 */
 	void cleanup() {
+		// Destroy the resources related with swap chain
+		// 摧毁与交换链相关的资源
 		cleanupSwapChain();
 
 		vkDestroyPipeline(device, graphicsPipeline, nullptr);
 		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
 		vkDestroyRenderPass(device, renderPass, nullptr);
 
+		// Destroy the vertex buffer
+		// 摧毁顶点数组
 		vkDestroyBuffer(device, vertexBuffer, nullptr);
+		// Free the memory allocated to the vertex buffer
+		// 释放分配给顶点数组的存储空间
 		vkFreeMemory(device, vertexBufferMemory, nullptr);
 
+		// 
 		// 摧毁信号量
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 			vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
@@ -475,9 +508,11 @@ private:
 			vkDestroyFence(device, inFlightFences[i], nullptr);
 		}
 
+		// 
 		// 摧毁指令池
 		vkDestroyCommandPool(device, commandPool, nullptr);
 
+		// Destroy the logical device
 		// 摧毁逻辑设备
 		vkDestroyDevice(device, nullptr);
 
@@ -504,29 +539,38 @@ private:
 		glfwTerminate();
 	}
 
-	// 
-	// 重建交换链
+	/* Create window surface */
+	/* 重建交换链 */
 	void recreateSwapChain() {
-		// 
-		// 最小化时，停止渲染
+		// While the window is minimized
+		// 在最小化状态时
 		int width = 0, height = 0;
 		glfwGetFramebufferSize(window, &width, &height);
 		while (width == 0 || height == 0) {
+			// Acquire the current extent of the frame buffer
+			// 获取当前的窗口的帧缓存的大小
 			glfwGetFramebufferSize(window, &width, &height);
+			// Monitor the event continuously
+			// 监测某些事件
 			glfwWaitEvents();
 		}
 
-		//
+		// 
 		// 等待设备处于空闲状态，避免在对象使用过程中将其清除重建
 		vkDeviceWaitIdle(device);
 
-
-		//
-		//
+		// Destroy the resources related with swap chain
+		// 摧毁与交换链相关的资源
 		cleanupSwapChain();
 
+		// Create swap chain
+		// 创建交换链
 		createSwapChain();
+		// Create image views
+		// 创建图像视图
 		createImageViews();
+		// 
+		// 
 		createFramebuffers();
 	}
 
@@ -543,7 +587,7 @@ private:
 		/* 填入应用信息 */
 
 		// Construct a instance that holds information on how to create appInfo
-		// 构造一个用于存储应用信息的实例
+		// 构造一个持有应用信息的实例
 		VkApplicationInfo appInfo{};
 		// Explicitly specify the structure type (for the support of p->next)
 		// 明确指定结构的类型
@@ -568,7 +612,7 @@ private:
 		/* 填入用于创建 VkInstance 的信息 */
 
 		// Construct a instance that holds information on how to create VkInstance
-		// 构造一个用于存储创建VulkanInstance所需信息的实例
+		// 构造一个持有创建VulkanInstance所需信息的实例
 		VkInstanceCreateInfo createInfo{};
 
 		// Explicitly specify the structure type
@@ -678,8 +722,8 @@ private:
 		}
 	}
 
-	// Select a graphics card in the system that support the features we need
-	// 从系统中选出一个支持我们想要的特性的物理显卡（在这里我们选第一个）
+	/* Select a graphics card in the system that support the features we need */
+	/* 从系统中选出一个支持我们想要的特性的物理显卡（在这里我们选第一个） */
 	void pickPhysicalDevice() {
 		// The count of the physical device
 		// 可用物理设备的数量
@@ -695,7 +739,7 @@ private:
 		}
 
 		// Create a VkPhysicalDevice container with the size of deviceCount
-		// 创建一个用于存储 VkPhysicalDevice 对象的容器，大小为 deviceCount
+		// 创建一个持有 VkPhysicalDevice 对象的容器，大小为 deviceCount
 		std::vector<VkPhysicalDevice> devices(deviceCount);
 		// Acquire the physical devices that is available and store them in the container we created
 		// 获取可用的物理设备，并将他们存放在刚刚创建的容器里
@@ -747,10 +791,10 @@ private:
 	//// 给物理设备按照其所支持的特性打分，分高者任之
 	//int rateDeviceSuitability(VkPhysicalDevice device) {
 	//	// Construct a instance that holds information on the properties of physical device
-	//	// 构造一个用于存储物理设备的基本属性的实例（如基础的设备属性，如名称、类型、支持的 Vulkan 版本）
+	//	// 构造一个持有物理设备的基本属性的实例（如基础的设备属性，如名称、类型、支持的 Vulkan 版本）
 	//	VkPhysicalDeviceProperties deviceProperties;
 	//	// Construct a instance that holds information on the features of physical device
-	//	// 构造一个用于存储物理设备的功能特性的实例（如纹理压缩，64 位浮点和多视口渲染等特性）
+	//	// 构造一个持有物理设备的功能特性的实例（如纹理压缩，64 位浮点和多视口渲染等特性）
 	//	VkPhysicalDeviceFeatures deviceFeatures;
 	//	// Get the properties supported of the physical device
 	//	// 获取物理设备所支持的基本属性
@@ -780,8 +824,8 @@ private:
 	//	return score;
 	//}
 
-	// Create the logical device
-	// 创建逻辑设备
+	/* Create the logical device */
+	/* 创建逻辑设备 */
 	void createLogicalDevice() {
 		// Search for and return the queue family index we desired
 		// 查找并返回需求的队列族的索引
@@ -791,7 +835,7 @@ private:
 		// 创建用来存储所有的队列创建信息的容器
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 		// Create a set for queue family, and initialize with the value(index) of graphicsFamily and presentFamily
-		// 创建每一个不同的队列族
+		// 将图形队列族和呈现队列族的索引放入一个集合中
 		std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };
 
 		// Assign priorities to queues to influence the scheduling of command buffer execution
@@ -869,121 +913,199 @@ private:
 		// 取回图形队列的句柄
 		vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
 		// Retrieving the present queue handles
-		// 取回展示队列的句柄
+		// 取回呈现队列的句柄
 		vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
 	}
 
-	// 交换链
-	// 创建交换链
+
+	/* Create swap chain (a queue of images that are waiting to be presented to the screen) */
+	/* 创建交换链（一个等待呈现到屏幕上的图像队列） */
 	void createSwapChain() {
+		// Acquire:
+		// 获取：
+		//		basic surface capabilities (min/max number of images in swap chain, min/max width and height of images)
+		//		基本表面功能（交换链中图像的最小/最大数量、图像的最小/最大宽度和高度）
+		//		surface formats (pixel format, color space)
+		//		表面格式（像素格式、色欲）
+		//		available presentation modes
+		//		可用的呈现模式
 		SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
 
+		// Choose the Surface format (color depth, color space)
+		// 选择交换链的表面格式（色深、色域）
 		VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
+		// Choose the presentation mode (conditions for "swapping" images to the screen)
+		// 选择交换链的呈现模式（将图像“交换”到屏幕的条件）
 		VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
+		// Choose the swap extent (resolution of images in swap chain)
+		// 选择交换链的画幅范围（交换链中图像的分辨率）
 		VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
 
-		// 设置交换链中图像个数，至少设置为最小个数 +1 来实现三重缓冲
+		// Simply sticking image count to the minimum means that we may sometimes have to wait on the driver to complete internal operations before we can acquire another image to render to.
+		//		Therefore it is recommended to request at least one more image than the minimum. (Don't understand right now)
+		// 简单地把这个设置为最小值，意味着我们有时可能必须等待驱动程序完成内部操作，然后才能获取另 1 个图像进行渲染。因此，建议至少多请求 1 张图像（目前不理解）
 		uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
-		// maxImageCount = 0 意味着只要内存满足，可以使用任意数量的图像
+		// If the imageCount we set exceeds the maximum of the image count supported by the swap chain, cap the imageCount to the maximum
+		// 如果 imageCount 的值超过了交换链所支持的最大值，则将 imageCount 设为那个最大值
+		// maxImageCount = 0 means no maximum limitation is set
+		// maxImageCount = 0 意味着没有最大值的限制
 		if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
 			imageCount = swapChainSupport.capabilities.maxImageCount;
 		}
 
-		// 填写创建信息结构体
+		// Construct the instance that hold information regarding how to allocate the memory
+		// 构造一个持有 交换链的创建 信息的实例
 		VkSwapchainCreateInfoKHR createInfo{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
 		createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+		// Specify the image from the swap chain will be present to which surface
+		// 明确交换链中的图片会被呈现到哪个表面
 		createInfo.surface = surface;
 
+		// Specify the minimum count of the image of the swap chain
+		// 明确交换链的最小的图片个数
 		createInfo.minImageCount = imageCount;
+		// Specify the image format (color depth) of the swap chain
+		// 指定交换链的图片格式为表面的格式
 		createInfo.imageFormat = surfaceFormat.format;
+		// Specify the image color space of the swap chain (color depth, color space)
+		// 指定交换链的图片色域为表面的色域
 		createInfo.imageColorSpace = surfaceFormat.colorSpace;
+		// Specify the image extent (resolution) of the swap chain
+		// 指定交换链的画幅为我们设置的画幅
 		createInfo.imageExtent = extent;
-		// 指定每个图像包含的层次，通常是 1，VR 相关程序会使用更多的层次
+		// Specify the amount of layers each image consists of, always 1 unless we are developing a stereoscopic 3D application
+		// 层次指定每个图像包含的层数，通常为1，除非我们正在开发立体3D应用程序（VR）
 		createInfo.imageArrayLayers = 1;
-		// 指定我们将在图像上进行怎样的操作，下面就仅仅是绘制操作（还可以设置为可以后期处理的操作）
+		
+		// Specify what kind of operations we'll use the images in the swap chain for, for now is just render directly to them, which means that they're used as color attachment
+		// 指定我们将在交换链中使用图像的操作类型，目前只是直接渲染到它们，这意味着它们被用作颜色附件
 		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		// It is also possible that you'll render images to a separate image first to perform operations like post-processing.
+		// In that case you may use a value like VK_IMAGE_USAGE_TRANSFER_DST_BIT instead and use a memory operation to transfer the rendered image to a swap chain image.
+		// TODO:也有可能先将图像渲染到单独的图像中，以执行后处理等操作。在这种情况下，可以使用类似 VK_IMAGE_USAGE_TRANSFER_DST_BIT 的值，并使用内存操作将渲染的图像传输到交换链图像。
 
-		// 指定多个队列族使用交换链图像的方式
+		/* Specify how to handle swap chain images that will be used across multiple queue families */
+		/* 指定多个队列族如何共用交换链图像 */
+		// Search for and return the queue family index we desired
+		// 查找并返回需求的队列族的索引
 		QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+		// Create a set for queue family, and initialize with the value(index) of graphicsFamily and presentFamily
+		// 将图形队列族和呈现队列族的索引放入一个集合中
 		uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
 
-		// 图形队列和呈现队列不再同一个队列
-		// 通过图形队列在交换链图像上进行绘制，将图像提交给呈现队列来显示
+		// If the graphics queue family and the presentation queue family are not the same, then
+		//		drawing on the images in the swap chain from the graphics queue and then submitting them on the presentation queue
+		// 如果图形队列和呈现队列不再同一个队列，则在交换链的图形队列上进行图像的绘制，然后将图像提交给呈现队列来显示
 		if (indices.graphicsFamily != indices.presentFamily) {
+			// Images can be used across multiple queue families without explicit ownership transfers.
 			// 图像可以在多个队列族使用，不需要显示地改变所有权
-			// 协同模式
 			createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-			// 指定共享所有全的队列族
+			// Specify the number of queue family index that the image will be shared with
+			// 指定共享所有权的队列族的数目
 			createInfo.queueFamilyIndexCount = 2;
+			// Specify the queue family indices that the image will be shared with
+			// 指定共享所有权的队列族
 			createInfo.pQueueFamilyIndices = queueFamilyIndices;
 		} else {
-			// 一张图像同时只能被一个队列族拥有，显示改变所有权才能换族，这一模式性能最佳
+			// An image is owned by one queue family at a time and ownership must be explicitly transferred before using it in another queue family.
+			// This option offers the best performance, which is the case on most hardware
+			// 一张图像同时只能被一个队列族拥有，显示改变所有权才能换族。这一模式性能最佳，多数硬件使用这种模式
 			createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		}
 
-		// 对交换链中图像指定一个固定的交换操作，currentTransform 为不操作
+		// Specify a certain transform should be applied to images in the swap chain, like a 90 degree clockwise rotation, right now no transformation is wanted
+		// 对交换链中图像指定一个固定的变换操作，如顺时针旋转 90 度，currentTransform 为不进行变换操作
 		createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
-		// 指定 alpha 通道是否被用来和窗口系统中其他窗口混合，下面将忽略 alpha 通道，设置为不透明
+		// Specify if the alpha channel should be used for blending with other windows in the window system, simply ignore the alpha channel for now
+		// 指定 alpha 通道是否被用来和窗口系统中其他窗口混合，目前忽略 alpha 通道，即设置为不透明
 		createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		// Set the presentation mode (FIFO)
 		// 设置呈现模式
 		createInfo.presentMode = presentMode;
-		// 表示不关心被窗口系统其他窗口遮挡的像素颜色
+		// Specify that we don't care about the color of pixels that are obscured, for example because another window is in front of them. Enabling clipping will get the best performance.
+		// 设置不关心被窗口系统其他窗口遮挡的像素颜色，比如有另一个窗口在它们前面的情况。启用剪辑将获得最佳性能。
 		createInfo.clipped = VK_TRUE;
 
-		// 创建交换链
+		// Use the information above to create the swap chain
+		// 使用以上信息创建交换链
 		if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create swap chain!");
 		}
 
-		// 获取交换链图像句柄
+		/* Retrieve the swap chain images */
+		/* 取回交换链中的图像 */
+		// Acquire the count of the swap chain images
+		// 获取交换链中的图像的数目
 		vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
+		// Resize the count of the swapChainImages container to imageCount
+		// 将 swapChainImages 容器的大小调整为 imageCount
 		swapChainImages.resize(imageCount);
+		// Acquire the swap chain images, store them in the swapChainImages container
+		// 获取交换链中的图像，保存在 swapChainImages 中
 		vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
 
-		// 存储交换链的图像格式和范围
+		// Store the format and extent we've chosen for the swap chain images in member variables, will need them in other place
+		// 存储交换链的图像格式和画幅，别的地方会用到
 		swapChainImageFormat = surfaceFormat.format;
 		swapChainExtent = extent;
 	}
 
-	// 图像视图
+	/* Create image views */
+	/* 创建图像视图 */
 	void createImageViews() {
-		// 分配空间
+		// Resize the container to fit all of the image views we'll be creating
+		// 调整容器大小以适应我们将创建的所有图像视图
 		swapChainImageViews.resize(swapChainImages.size());
 
+		// Iterate over all of the swap chain images to create the image views
 		// 遍历交换链所有图像来创建图像视图
 		for (size_t i = 0; i < swapChainImages.size(); i++) {
+			// Construct a instance that hold information about creating the image views
 			// 填写图像视图创建信息结构体
 			VkImageViewCreateInfo createInfo{};
 			// Explicitly specify the structure type
 			// 明确指定结构的类型
 			createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			// The source image of the image view will be the image in the swap chain
+			// v图像视图的源图像为交换链中的图像
 			createInfo.image = swapChainImages[i];
-			// 指定图像数据的解释方式，viewType 指定图像被看作是几维纹理
+			// Specify that the image will be treated as a 2D texture
+			// 指定图像数据的解释方式，指定图像被看作是 2 维纹理
 			createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			// Specify the format of the image view is the format of the image in the swap chain
+			// 指定图像视图中的图像的格式为交换链中的图像的格式
 			createInfo.format = swapChainImageFormat;
-			// components 用于进行图像颜色通道的映射，此处使用默认映射
+			// Specify the mapping of the color channel to be default
+			// 设置图像颜色通道的映射为默认映射
 			createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
 			createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
 			createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
 			createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-			// subresourceRange 用于指定图像的用途和图像哪一部分可以被访问，此处图像被用作渲染目标，只存在一个图层
+			
+			// Images will be used as color targets
+			// 图像被用作渲染目标
 			createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			// No mipmapping levels
+			// 没有 mipmap
 			createInfo.subresourceRange.baseMipLevel = 0;
 			createInfo.subresourceRange.levelCount = 1;
+			// No multiple layers
+			// 没有多个图层
 			createInfo.subresourceRange.baseArrayLayer = 0;
 			createInfo.subresourceRange.layerCount = 1;
 
-			// 创建图像视图
+			// Create the image view based on the above information
+			// 基于以上信息创建图像视图
 			if (vkCreateImageView(device, &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create image views!");
 			}
 		}
 	}
 
-	// 渲染流程
-	// 设置用于渲染的帧缓冲附着
+	/*  */
+	/* 渲染流程，设置用于渲染的帧缓冲附着 */
 	void createRenderPass() {
 		VkAttachmentDescription colorAttachment{};
 		colorAttachment.format = swapChainImageFormat;
@@ -1044,51 +1166,80 @@ private:
 		renderPassInfo.dependencyCount = 1;
 		renderPassInfo.pDependencies = &dependency;
 
+		// 
+		// 
 		if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create render pass!");
 		}
 	}
 
-	// 图形管线
+	/* Create graphcis pipeline */
+	/* 创建图形管线 */
 	void createGraphicsPipeline() {
+		// Read the vertex shader, SPIR-V byte code compiled by GLSL compiler
+		// 读入顶点着色器的程序（由 GLSL 编译生成的 SPIR-V 字节码）
 		auto vertShaderCode = readFile(".\\shaders\\vert.spv");
+		// Read the fragment shader, SPIR-V byte code compiled by GLSL compiler
+		// 读入片元着色器的程序（由 GLSL 编译生成的 SPIR-V 字节码）
 		auto fragShaderCode = readFile(".\\shaders\\frag.spv");
 
-		// 着色器模块只在管线创建时需要
+		// Create the shader module using the vertex shader code
+		// 使用顶点着色代码创建顶点着色器模块
 		VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
+		// Create the fragment module using the vertex shader code
+		// 使用片元着色代码创建片元着色器模块
 		VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
 
-		// 填写指定着色器阶段创建信息结构体
+		// Construct the instance that hold information on the creation of the vertex shader stage
+		// 构造持有着色器阶段创建信息结构体
 		VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
 		vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		// Explicitly specify the stage of the shader to be a vertex stage
+		// 明确着色器的阶段为顶点阶段
 		vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+		// Specify the shader module to the stage: vertex shader
+		// 指定需要使用的着色器模块：顶点着色器
 		vertShaderStageInfo.module = vertShaderModule;
-		// pname 用于指定阶段调用的着色器函数
+		// Specify the function name to be called
+		// 指定需要调用的函数名
 		vertShaderStageInfo.pName = "main";
 
-		// 填写指定着色器阶段创建信息结构体
+		// Construct the instance that hold information on the creation of the vertex shader stage
+		// 构造持有着色器阶段创建信息结构体
 		VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
 		fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		// Explicitly specify the stage of the shader to be a fragment stage
+		// 明确着色器的阶段为片元阶段
 		fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+		// Specify the shader module to the stage: fragment shader
+		// 指定需要使用的着色器模块：片元着色器
 		fragShaderStageInfo.module = fragShaderModule;
-		// pname 用于指定阶段调用的着色器函数
+		// Specify the function name to be called
+		// 指定需要调用的函数名
 		fragShaderStageInfo.pName = "main";
 
+		// Put the two shader modules into an array for future reference
+		// 将 2 个着色器阶段放入 shaderStages 的数组中，后面会用到
 		VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
-		// 下面来设置固定功能
 
+		/* Configured the fixed funtion stage */
+		/* 设置固定功能的阶段 */
+
+		// 
 		// 用来描述传递给顶点着色器的顶点数据格式，因为目前是硬编码顶点数据，所以其实不用描述，赋值 0
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
+		// Acquire the binding information of the vertex data
 		// 获取顶点数据的绑定信息
 		auto bindingDescription = Vertex::getBindingDescription();
+		// Acquire the attribute information of the vertex data
 		// 获取顶点数据中的属性
 		auto attributeDescriptions = Vertex::getAttributeDescriptions();
 
@@ -1119,16 +1270,23 @@ private:
 		inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		inputAssembly.primitiveRestartEnable = VK_FALSE;
 
+		// 
 		// 定义视口
 		
+		// 
 		// 定义裁剪矩形
 
+		// 
 		// 组合视口和裁剪矩形
 		VkPipelineViewportStateCreateInfo viewportState{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
 		viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+		// 
+		// 
 		viewportState.viewportCount = 1;
+		// 
+		// 
 		viewportState.scissorCount = 1;
 
 		// 光栅化
@@ -1236,12 +1394,16 @@ private:
 			throw std::runtime_error("failed to create graphics pipeline!");
 		}
 
-		// 清除 shaderModule
+		// Destroy the vertex shader module
+		// 摧毁顶点着色器模块
 		vkDestroyShaderModule(device, fragShaderModule, nullptr);
+		// Destroy the fragment shader module
+		// 摧毁片元着色器模块
 		vkDestroyShaderModule(device, vertShaderModule, nullptr);
 	}
 
-	// 帧缓冲
+	/*  */
+	/* 帧缓冲 */
 	void createFramebuffers() {
 		swapChainFramebuffers.resize(swapChainImageViews.size());
 		// 为交换链的每一个图像视图对象创建帧缓冲
@@ -1270,8 +1432,9 @@ private:
 			}
 		}
 	}
-	
-	// 指令缓冲
+
+	/*  */
+	/* 指令缓冲 */
 	void createCommandPool() {
 		QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
 
@@ -1292,7 +1455,7 @@ private:
 	/* 创建顶点数组 */
 	void createVertexBuffer() {
 		// Construct the instance that hold information of creating buffer
-		// 构造一个用于存储 buffer 创建信息的实例
+		// 构造一个持有 buffer 创建信息的实例
 		VkBufferCreateInfo bufferInfo{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
@@ -1314,14 +1477,14 @@ private:
 
 		/* 获取 buffer 对内存的需求，从而为刚刚创建的顶点数组分配内存 */
 		// Construct the instance that hold information regarding the memory for creating the buffer 
-		// 构造一个用于存储内存需求的实例
+		// 构造一个持有内存需求的实例
 		VkMemoryRequirements memRequirements;
 		// Query the desired properties of the vertex buffer
 		// 询问顶点数据 buffer 对于内存的需求
 		vkGetBufferMemoryRequirements(device, vertexBuffer, &memRequirements);
 
 		// Construct the instance that hold information regarding how to allocate the memory
-		// 构造一个用于存储内存分配信息的实例
+		// 构造一个持有内存分配信息的实例
 		VkMemoryAllocateInfo allocInfo{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
@@ -1360,11 +1523,11 @@ private:
 		vkUnmapMemory(device, vertexBufferMemory);
 	}
 
-	// Find the memory type desired
+	/* Find the memory type desired */
 	/* 寻找存储的类型 */
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
 		// Construct a instance to store memory properties information, including memory type and memory heap
-		// 构造一个用于存储 memory 属性信息的实例（包含存储类型和存储堆）
+		// 构造一个持有 memory 属性信息的实例（包含存储类型和存储堆）
 		// The VkPhysicalDeviceMemoryProperties structure has two arrays: memoryTypes and memoryHeaps.
 		// Memory heaps are distinct memory resources like dedicated VRAM and swap space in RAM for when VRAM runs out. The different types of memory exist within these heaps.
 		VkPhysicalDeviceMemoryProperties memProperties;
@@ -1389,7 +1552,8 @@ private:
 
 	}
 
-	// 分配指令缓冲
+	/*  */
+	/* 分配指令缓冲 */
 	void createCommandBuffers() {
 		// 绘制操作是在帧缓冲上进行的
 		commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
@@ -1409,7 +1573,8 @@ private:
 		}
 	}
 
-	// 记录指令到指令缓冲
+	/*  */
+	/* 记录指令到指令缓冲 */
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
 		VkCommandBufferBeginInfo beginInfo{};
 		// Explicitly specify the structure type
@@ -1479,7 +1644,8 @@ private:
 		}
 	}
 
-	// 创建同步对象
+	/*  */
+	/* 创建同步对象 */
 	void createSyncObjects() {
 		imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
 		renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
@@ -1508,6 +1674,8 @@ private:
 		}
 	}
 
+	/*  */
+	/*  */
 	void drawFrame() {
 		// 等待当前帧所使用的指令缓冲结束执行
 		vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
@@ -1590,112 +1758,154 @@ private:
 		currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 	}
 
-	// 将着色器字节码在管线上使用，需要 VkShaderModule 对象
+	/* Create the shader modules */
+	/* 创建着色器模块 */
 	VkShaderModule createShaderModule(const std::vector<char>& code) {
+		// Construct the instance that holds information about the creation of the shader module
+		// 构造一个持有 着色器模块 的创建信息实例
 		VkShaderModuleCreateInfo createInfo{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
 		createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		// Specify the size of the shader code
+		// 指定着色器代码的大小
 		createInfo.codeSize = code.size();
-		// 需要将存储字节码的数组指针转换下
+		// Specify the pointer of the code. The bytecode pointer is a uint32_t pointer rather than a char pointer, so a reinterpreted cast is performed
+		// 指定着色器代码的地址，需要的字节码的类型是 uint32_t * 而不是 char * ，所以需要将存储字节码的数组指针的类型转换下
 		createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
 
-		// 创建 VkShaderModule 对象
+		// Create shader module based on the information above
+		// 使用以上信息创建着色器模组
 		VkShaderModule shaderModule;
 		if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create shader module!");
 		}
 
+		// Return the shader module created
+		// 返回创建的着色器模组
 		return shaderModule;
 	}
 
-	// 选择合适的表面格式
+	/* Choose the proper surface format of the swap chain from the available surface formats */
+	/* 从可用的交换链的表面格式中，选择需要使用的表面格式 */
 	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
-		
-		// // 如果表面没有自己的首选格式
-		//  if (availableFormats.size() == 1 && availableFormats[0].format == VK_FORMAT_UNDEFINED) {
-		// // 返回我们设定的格式	
-		//  return { VK_FORMAT_B8G8R8A8_UNORM, VK_COLORSPACE_SRGB_NONLINEAR_KHR };
-		//  }
 
-		// 如果 Vulkan 返回了一个格式列表，返回指的是 availableFormats
-		// 检查我们想要设定的格式是否存在于这个列表中
+		// For each surface format in the available formats, check and return the one that supports the format and color space we desired
+		// 对于每一个可用的表面格式，检测并返回 像素格式和色域 符合我们的需求的表面格式
 		for (const auto& availableFormat : availableFormats) {
 			if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
 				return availableFormat;
 			}
 		}
 		
-		// 如果不能在列表中找到我们想要的格式，可以打分找出最合适的格式也可以直接选第一个
+		// If there were no surface format that could meet our desire, simply choose the first one regretly (or rate them)
+		// 如果不能在列表中找到我们想要的格式，直接选第一个（也可以打分找出最合适的格式）
 		return availableFormats[0];
 	}
 
-	// 选择最佳的可用呈现模式
+	/* Choose the presentation mode of the swap chain */
+	/* 选择交换链的呈现模式 */
 	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) {
-		// // 一般都有 FIFO 模式
-		// VkPresentModeKHR bestMode = VK_PRESENT_MODE_FIFO_KHR;
 		for (const auto& availablePresentMode : availablePresentModes) {
-			// 三重缓冲综合表现最佳，既避免了撕裂现象，同时有较低的延迟
+			// Choose triple buffering if it is available (not availble for my integrated GPU, but available for my dedicated GPU)
+			// 如果交换链支持三重缓冲，则选择三重缓冲（我的核显不支持三重缓冲，但是我的独显支持)（这里可以选独显演示）
+			// Triple buffering renders frames as fast as possible while still avoiding tearing, resulting in fewer latency issues than standard vertical sync
+			// 三重缓冲综合表现最佳，既避免了撕裂现象，同时相较于普通垂直同步有较低的延迟
 			if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
 				return availablePresentMode;
 			}
 		}
 
-		// 但很多驱动程序对 FIFO 支持不够好，所以应该使用立即显示模式
-		// 没有三重缓冲就返回该模式
-		// TODO: 以上注释需要进一步修改
+		// VK_PRESENT_MODE_IMMEDIATE_KHR:		single buffering
+		// VK_PRESENT_MODE_FIFO_KHR:			FIFO queue (double buffering), VSync
+		// VK_PRESENT_MODE_FIFO_RELAXED_KHR:	FIFO queue, but the image is transferred right away when it finally arrives, if the queue was empty at the last vertical blank
+		// VK_PRESENT_MODE_MAILBOX_KHR:			triple buffering
 
+		// Only the VK_PRESENT_MODE_FIFO_KHR mode is guaranteed to be available, so if triple buffering is not available, use FIFO mode, i.e. standard VSync
+		// 只有 FIFO 模式会确保被所有设备支持，没有三重缓冲就使用 FIFO 模式
+		// TODO: 貌似很多驱动程序对 FIFO 支持不够好，所以应该使用立即显示模式
 		return VK_PRESENT_MODE_FIFO_KHR;
 	}
 
-	// 选择交换范围（即交换链中图像的分辨率）
+	/* Choose the swap extent (The resolution of images in swap chain) */
+	/* 选择交换范围（即交换链中图像的分辨率） */
 	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities) {
-		// 不允许自己选择交换范围
+		// Some window managers do allow us to differ the resolution of the swap chain images from the resolution of the window, this is indicated by
+		//		setting the width and height in currentExtent to a special value: the maximum value of uint32_t
+		// 一些窗口管理器确实允许我们将交换链图像的分辨率与窗口的分辨率不同，这是通过将 currentExtent 中的宽度和高度设置为一个特殊值来表示的：uint32_t的最大值
+		// If the current surface doesn't support setting customized extent, return the current extent
+		// 如果当前表面不允许自定义画幅，返回表面自带的画幅
 		if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
 			return capabilities.currentExtent;
 		} else {
-			// 设置为当前帧缓冲的实际大小
+			/* Set the resolution to customized resolution if allowed */
+			/* 设置为当前帧缓冲的实际大小 */
+			// Acquire the current extent of the frame buffer
+			// 获取当前的窗口的帧缓存的大小
 			int width, height;
 			glfwGetFramebufferSize(window, &width, &height);
 
-			// 允许自己选择对于窗口最合适的交换范围
+			// Put the width and height above in a structure
+			// 将窗口宽高放入一个结构体中
 			VkExtent2D actualExtent = {
 				static_cast<uint32_t>(width),
 				static_cast<uint32_t>(height)
 			};
-
+			// Set the extent while bounding the values of width and height between the allowed minimum and maximum extents that are supported by the implementation
+			// 设置自定义的画幅范围，并确保这个范围不会过大或过小
 			actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
 			actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
 
+			// Return the actual extent
+			// 返回实际的画幅
 			return actualExtent;
 		}
 	}
 
-	// 用于填写上面的结构体
+	/* Populate the SwapChainSupportDetails struct */
+	/* 填写 SwapChainSupportDetails 结构体 */
 	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device) {
+		// Construct a instance to store the details of the swap chain
+		// 构造一个持有交换链细节信息的实例
 		SwapChainSupportDetails details;
 
-		// 查询基础表面特性
+		// Acquire the window surface available
+		// 获取可用的窗口表面特性
 		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
 
-		// 查询表面支持的格式
+		// Get the count of the format that window surface supported by the physical device
+		// 获取物理设备的窗口表面所支持的格式的数目
 		uint32_t formatCount;
 		vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
 
+		// If the formatCount is not 0
+		// 如果 formatCount 不是 0
 		if (formatCount != 0) {
+			// Resize the size of the format to formatCount
+			// 将 format 的大小改为 formatCount
 			details.formats.resize(formatCount);
+			// Get the format that window surface supported by the physical device
+			// 获取物理设备的窗口表面所支持的格式
 			vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
 		}
 		
-		// 查询支持的呈现格式
+		// Get the count of the presentation mode that window surface supported by the surface of the physical device
+		// 获取物理设备的所支持的表面的呈现格式的数目
 		uint32_t presentModeCount;
 		vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
 
+		// If the presentModeCount is not 0
+		// 如果 presentModeCount 不是 0
 		if (presentModeCount != 0) {
+			// Resize the size of the presentModes to presentModeCount
+			// 将 presentModes 的大小改为 presentModeCount
 			details.presentModes.resize(presentModeCount);
+			// Get the presention mode that window surface supported by the surface of the physical device
+			// 获取物理设备的所支持的表面的呈现格式
 			vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, details.presentModes.data());
 		}
-
+		// Return the populated SwapChainSupportDetails
+		// 返回已经填满交换链信息的实例
 		return details;
 	}
 
@@ -1719,13 +1929,13 @@ private:
 			// Check if the physical device can support the desired swap chain
 			// 检测交换链的能力是否满足需求
 			SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
-			// 
-			// 
+			// Swap chain is adequate if the format and presentMode exist
+			// 如果交换链的格式和呈现模式存在，则交换链是合格的
 			swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
 		}
 
-		// Return true if TODO, the extension, and the swap chain
-		// 
+		// Return true if (the queue index of the graphics family and the present family exist) && (the extensions are all supported) && (the swap chain is adequate)
+		// 返回值为真如果（图形队列族和呈现队列族的索引存在）&&（所有的设备扩展都支持）&&（交换链的能力合格）
 		return indices.isComplete() && extensionsSupported && swapChainAdequate;
 	}
 
@@ -1733,7 +1943,7 @@ private:
 	/* 查找并返回需求的队列族的索引 */
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
 		// Construct the instance that hold information of queue family index
-		// 构造一个用于存储 队列族索引 的实例
+		// 构造一个持有 队列族索引 的实例
 		QueueFamilyIndices indices;
 		
 		// Get the count of the queueFamily that the physical device support
@@ -1760,13 +1970,13 @@ private:
 				indices.graphicsFamily = i;
 			}
 
-			// Check if the physical device support present
-			// 检查设备是否支持展示
+			// Check if the physical device support presentation
+			// 检查设备是否支持呈现
 			VkBool32 presentSupport = false;
 			vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
 
-			// If the present support is supported, give the index value to the presentFamily field
-			// 如果该队列族支持展示功能，则将索引值赋给 presentFamily
+			// If the presenttion support is supported, give the index value to the presentFamily field
+			// 如果该队列族支持呈现功能，则将索引值赋给 presentFamily
 			if (presentSupport) {
 				indices.presentFamily = i;
 			}
@@ -1847,8 +2057,8 @@ private:
 		return extensions;
 	}
 
-	// Check if the validation layers that we would like to use are all supported
-	// 检查配置的校验层是否全被支持
+	/* Check if the validation layers that we would like to use are all supported */
+	/* 检查配置的校验层是否全被支持 */
 	bool checkValidationLayerSupport() {
 		// Initialize the counter
 		// 初始化计数器
@@ -1894,27 +2104,43 @@ private:
 		return true;
 	}
 
-	// Helper function to read file content
-	// 载入二进制文件的辅助函数
+	/* Helper function to read file content */
+	/* 用于读入二进制文件内容的辅助函数 */
 	static std::vector<char> readFile(const std::string& filename) {
-		//  ate 从文件尾部开始读取，binary 以二进制形式读取文件
+		// Use C++ standard file input stream to read the content of the target file
+		// 使用 C++ 标准文件输入流读入目标文件的内容
+		// ate: Start reading at the end of the file
+		// ate：从文件尾部开始读取
+		// binary: Read the file as binary file (avoid text transformations)
+		// binary：以二进制形式读取文件（避免文字转换）
 		std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
+		// Throw a runtime error if the file can't be opened
+		// 如果文件没有被成功打开，抛出一个运行时错误
 		if (!file.is_open()) {
 			throw std::runtime_error("failed to open file!");
 		}
 
-		// 使用 ate 可以根据读取位置确定文件大小，分配空间
+		// Use the read position to determine the size of the file, as we are starting to read at the end of the file
+		// 使用读取位置来确定文件的大小，因为我们设置从文件末尾开始读取
 		size_t fileSize = (size_t)file.tellg();
-		// std::cout << filename << "   " << fileSize << std::endl;
+		// Create a container based on the size of the file to store the content of the file
+		// 根据文件的大小创建一个容器以存储文件的内容
 		std::vector<char> buffer(fileSize);
 
+		// Jump to the start of the file
 		// 跳到文件头部来读取整个文件
 		file.seekg(0);
+		// Really reading the content of the file. the size of the reading is fileSize, and the content will be stored in the buffer container
+		// 真的开始读文件内容，大小为 fileSize，内容会被存储在 buffer 容器中
 		file.read(buffer.data(), fileSize);
 
+		// Close the file
+		// 关闭文件
 		file.close();
 
+		// Return the content of the file
+		// 返回读入的文件内容
 		return buffer;
 	}
 
@@ -1935,6 +2161,8 @@ private:
 	}
 };
 
+/* The main function */
+/* 主函数 */
 int main() {
 	// Construct the HelloTriangleApplication instance named app
 	// 创建 HelloTriangleApplication 实例，命名为 app
