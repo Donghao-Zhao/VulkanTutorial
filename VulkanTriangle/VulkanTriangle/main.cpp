@@ -225,7 +225,7 @@ struct Vertex {
 		// 数据类型是 2 个 32bit 有符号浮点数
 		attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
 		// The offset of the coordinate data of the vertex is the size of the member variable: pos
-		// 位置坐标数据占用的空间
+		// 位置坐标的偏移量为成员变量 pos 占用的空间
 		attributeDescriptions[0].offset = offsetof(Vertex, pos);
 
 		/* Color data of the vertex */
@@ -241,7 +241,7 @@ struct Vertex {
 		// 数据类型是 3 个 32bit 有符号浮点数
 		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
 		// The offset of the color data of the vertex is the size of the member variable: color
-		// 颜色数据占用的空间
+		// 颜色数据的偏移量为成员变量 color 所占用的空间
 		attributeDescriptions[1].offset = offsetof(Vertex, color);
 
 		// Return the attributeDescriptions instance
@@ -307,8 +307,6 @@ private:
 	// 逻辑设备，作为与物理设备交互的接口
 	VkDevice device;
 
-	/* Queue handle, automatically being destroyed when the device is destroyed */
-	/* 逻辑设备的队列句柄，会随着逻辑设备的摧毁而自动摧毁 */
 	// The graphics queue handles
 	// 图形队列的句柄
 	VkQueue graphicsQueue;
@@ -331,18 +329,22 @@ private:
 	// The image view container
 	// 图像视图容器
 	std::vector<VkImageView> swapChainImageViews;
-	// 
+	// The frame buffer container
 	// 所有帧缓冲对象
 	std::vector<VkFramebuffer> swapChainFramebuffers;
 
-	// 渲染流程
+	// The render pass
+	// 渲染通道
 	VkRenderPass renderPass;
+	// The pipeline layout
 	// 图形管线的布局
 	VkPipelineLayout pipelineLayout;
-	// 管线对象
+	// The graphics pipeline
+	// 图形管线对象
 	VkPipeline graphicsPipeline;
 
-	// 指令池，管理指令缓冲对象使用的内存并负责指令缓冲对象的分配
+	// The command pool, command pools manage the memory that is used to store the buffers and command buffers are allocated from them
+	// 指令池，管理用于存储指令缓冲的内存，指令缓冲对象从这些内存分配而来
 	VkCommandPool commandPool;
 
 	// The vertex buffer
@@ -352,21 +354,27 @@ private:
 	// 分配给顶点数组的内存
 	VkDeviceMemory vertexBufferMemory;
 
-	// 存储指令缓冲对象
+	// The command buffer
+	// 指令缓冲
 	std::vector<VkCommandBuffer> commandBuffers;
 
+	// 
 	// 图像被获取，可以开始渲染的信号量
 	std::vector<VkSemaphore> imageAvailableSemaphores;
 
+	// 
 	// 渲染已经结果，可以开始呈现的信号量
 	std::vector<VkSemaphore> renderFinishedSemaphores;
 
+	// 
 	// 为每一帧创建栅栏，来进行 CPU 和 GPU 之间的同步
 	std::vector<VkFence> inFlightFences;
 
+	// 
 	// 追踪当前渲染的是哪一帧
 	uint32_t currentFrame = 0;
 
+	// 
 	// 标记窗口是否发生改变
 	bool framebufferResized = false;
 
@@ -429,16 +437,26 @@ private:
 		// Create image view, which describes how to access the image and which part of the image to access
 		// 创建图像视图，它描述了如何访问图像以及要访问图像的哪一部分
 		createImageViews();
-		// 
-		// 
+		// Create render pass, which specify the framebuffer attachments that will be used while rendering
+		// 创建渲染通道，设置用于渲染的帧缓冲附着
 		createRenderPass();
 		// Create a graphics pipeline
 		// 创建图形管线
 		createGraphicsPipeline();
+		// Create frame buffer
+		// 创建帧缓冲
 		createFramebuffers();
+		// Create command pool
+		// 创建指令缓冲
 		createCommandPool();
+		// Create vertex buffer
+		// 创建顶点数组
 		createVertexBuffer();
+		// Create command buffer
+		// 创建指令缓冲
 		createCommandBuffers();
+		// 
+		// 
 		createSyncObjects();
 	}
 
@@ -465,8 +483,8 @@ private:
 	/* Destroy the resources related with swap chain */
 	/* 摧毁与交换链相关的资源 */
 	void cleanupSwapChain() {
-		// 
-		// 消除帧缓冲
+		// Destroy all frame buffers
+		// 摧毁所有帧缓冲
 		for (auto framebuffer : swapChainFramebuffers) {
 			vkDestroyFramebuffer(device, framebuffer, nullptr);
 		}
@@ -489,8 +507,14 @@ private:
 		// 摧毁与交换链相关的资源
 		cleanupSwapChain();
 
+		// Destroy the graphics pipeline
+		// 摧毁图形管线
 		vkDestroyPipeline(device, graphicsPipeline, nullptr);
+		// Destroy the pipeline layout
+		// 摧毁管线布局
 		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+		// Destroy the render pass
+		// 摧毁渲染通道
 		vkDestroyRenderPass(device, renderPass, nullptr);
 
 		// Destroy the vertex buffer
@@ -508,7 +532,7 @@ private:
 			vkDestroyFence(device, inFlightFences[i], nullptr);
 		}
 
-		// 
+		// Destroy the command pool
 		// 摧毁指令池
 		vkDestroyCommandPool(device, commandPool, nullptr);
 
@@ -548,7 +572,7 @@ private:
 		glfwGetFramebufferSize(window, &width, &height);
 		while (width == 0 || height == 0) {
 			// Acquire the current extent of the frame buffer
-			// 获取当前的窗口的帧缓存的大小
+			// 获取当前的窗口的帧缓冲的大小
 			glfwGetFramebufferSize(window, &width, &height);
 			// Monitor the event continuously
 			// 监测某些事件
@@ -569,8 +593,8 @@ private:
 		// Create image views
 		// 创建图像视图
 		createImageViews();
-		// 
-		// 
+		// Create frame buffer
+		// 创建帧缓冲
 		createFramebuffers();
 	}
 
@@ -626,7 +650,7 @@ private:
 		// Get the global extensions that is required by the instance
 		// 获取实例所需的全局扩展
 		auto extensions = getRequiredExtensions();
-		// The enabled extension count is the size of the extension container
+		// The enabled extension amount is the size of the extension container
 		// 启用的扩展的个数为 extension 容器的大小
 		createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 		// The name of the enabled extension are the data part of the extension container
@@ -642,7 +666,7 @@ private:
 		// If the validation layers are enabled
 		// 如果校验层被启用了
 		if (enableValidationLayers) {
-			// The enabled validation layer count is the size of the validation layer container
+			// The enabled validation layer amount is the size of the validation layer container
 			// 启用的校验层的个数为 validation layer 容器的大小
 			createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 			// The name of the enabled validation layer are the data part of the validation layer container
@@ -656,7 +680,7 @@ private:
 			// TODO：p->next 指向 debugCreateInfo，看起来这样操作直接在创建 VkInstance 的过程中调用了 debugCreateInfo 的回调函数输出了调试信息，不知道为什么能这么实现
 			createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
 		} else {
-			// If the validation layer is not enabled, then the count of the validation layer will be 0
+			// If the validation layer is not enabled, then the amount of the validation layer will be 0
 			// 如果没有启用校验层，则校验层的个数为 0
 			createInfo.enabledLayerCount = 0;
 			// p->next will be null pointer
@@ -725,7 +749,7 @@ private:
 	/* Select a graphics card in the system that support the features we need */
 	/* 从系统中选出一个支持我们想要的特性的物理显卡（在这里我们选第一个） */
 	void pickPhysicalDevice() {
-		// The count of the physical device
+		// The amount of the physical device
 		// 可用物理设备的数量
 		uint32_t deviceCount = 0;
 		// Acquire the physical graphics card that is available
@@ -851,7 +875,7 @@ private:
 			// The queue family index desired is the one we chose
 			// 队列族的索引是我们选择的那个可以满足需求的索引
 			queueCreateInfo.queueFamilyIndex = queueFamily;
-			// The queue count is 1
+			// The queue amount is 1
 			// 队列数目为 1
 			queueCreateInfo.queueCount = 1;
 			// The priority of the queue
@@ -873,7 +897,7 @@ private:
 		// 明确指定结构的类型
 		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
-		// Specify the count of the creation information of the queue
+		// Specify the amount of the creation information of the queue
 		// 指定需要创建多少个队列
 		createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 		// Specify the information for the creation of the queue
@@ -883,7 +907,7 @@ private:
 		// 指定我们需要的设备特性
 		createInfo.pEnabledFeatures = &deviceFeatures;
 
-		// The enabled extension count is the size of the deviceExtensions container
+		// The enabled extension amount is the size of the deviceExtensions container
 		// 启用的设备扩展的个数是 deviceExtensions 的大小
 		createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
 		// The name of the enabled extension is the data field of the deviceExtensions
@@ -893,7 +917,7 @@ private:
 		// Set validation layers for device as same as the instances is supported by Vulkan
 		// 现在 Vulkan 支持设置 设备和实例使用相同的校验层
 		if (enableValidationLayers) {
-			// Set the count of the validation layers to be enable
+			// Set the amount of the validation layers to be enable
 			// 设置需要被启用的校验层的个数
 			createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 			// Set the name of the validation layer
@@ -941,11 +965,11 @@ private:
 		// 选择交换链的画幅范围（交换链中图像的分辨率）
 		VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
 
-		// Simply sticking image count to the minimum means that we may sometimes have to wait on the driver to complete internal operations before we can acquire another image to render to.
+		// Simply sticking image amount to the minimum means that we may sometimes have to wait on the driver to complete internal operations before we can acquire another image to render to.
 		//		Therefore it is recommended to request at least one more image than the minimum. (Don't understand right now)
 		// 简单地把这个设置为最小值，意味着我们有时可能必须等待驱动程序完成内部操作，然后才能获取另 1 个图像进行渲染。因此，建议至少多请求 1 张图像（目前不理解）
 		uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
-		// If the imageCount we set exceeds the maximum of the image count supported by the swap chain, cap the imageCount to the maximum
+		// If the imageCount we set exceeds the maximum of the image amount supported by the swap chain, cap the imageCount to the maximum
 		// 如果 imageCount 的值超过了交换链所支持的最大值，则将 imageCount 设为那个最大值
 		// maxImageCount = 0 means no maximum limitation is set
 		// maxImageCount = 0 意味着没有最大值的限制
@@ -963,7 +987,7 @@ private:
 		// 明确交换链中的图片会被呈现到哪个表面
 		createInfo.surface = surface;
 
-		// Specify the minimum count of the image of the swap chain
+		// Specify the minimum amount of the image of the swap chain
 		// 明确交换链的最小的图片个数
 		createInfo.minImageCount = imageCount;
 		// Specify the image format (color depth) of the swap chain
@@ -1036,10 +1060,10 @@ private:
 
 		/* Retrieve the swap chain images */
 		/* 取回交换链中的图像 */
-		// Acquire the count of the swap chain images
+		// Acquire the amount of the swap chain images
 		// 获取交换链中的图像的数目
 		vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
-		// Resize the count of the swapChainImages container to imageCount
+		// Resize the amount of the swapChainImages container to imageCount
 		// 将 swapChainImages 容器的大小调整为 imageCount
 		swapChainImages.resize(imageCount);
 		// Acquire the swap chain images, store them in the swapChainImages container
@@ -1104,70 +1128,121 @@ private:
 		}
 	}
 
-	/*  */
-	/* 渲染流程，设置用于渲染的帧缓冲附着 */
+	/* Create render pass, which specify the framebuffer attachments that will be used while rendering */
+	/* 创建渲染通道，设置用于渲染的帧缓冲附着 */
+	//		RenderPass本质是定义一个完整的渲染流程以及使用的所有资源的描述
+	//		We'll have just a single color buffer attachment represented by one of the images from the swap chain
+	//		我们将只有一个颜色缓冲附着，由交换链中的一个图像代表
 	void createRenderPass() {
+		// Construct the instance that hold information regarding the color attachment
+		// 构造一个持有 颜色附着 信息的实例
 		VkAttachmentDescription colorAttachment{};
+		// The format of the color attachment should match the format of the swap chain images
+		// 颜色附着的格式需要与交换链中的图像的格式想匹配
 		colorAttachment.format = swapChainImageFormat;
+		// No multisampling, stick to 1 sample
+		// 没有使用多重采样，所以样本量仍然为 1
 		colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 		// 用于指定渲染前后对附着中的数据进行的操作（对颜色和深度缓冲起效），load 为前
-		// 使用一个常量值来清除附着内容，这里会在每次渲染前用黑色清除帧缓冲
+		// Before rendering: the data in the attachment will be cleared to constant values
+		// 渲染前，使用常量值来清除附着内容
 		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		// 渲染后的内容会被存储起来，以便之后读取
+		// After rendering: Rendered contents will be stored in memory and can be read later
+		// 渲染后，被渲染的内容会被存储起来，以便之后读取
 		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		
+		// The configuration for stencil data is irrelevant for now
+		// 以下为模板数据的配置，目前不关心
 		colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		// 下面两个对模板缓冲起效，但不用，所以不关心 // TODO:
 		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		// 使渲染后的图像可以被交换链呈现
 		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-		// 子流程和附着引用
+		/* Create attachment reference */
+		/* 创建颜色附着的引用 */
+
+		// Construct the instance that hold information regarding the reference of the color attachment
+		// 构造一个持有 附着引用 信息的实例
 		VkAttachmentReference colorAttachmentRef{};
-		// 指定要引用的附着索引
+		// Specify the index to refer the color attachment 
+		// 指定要引用的附着的索引
 		colorAttachmentRef.attachment = 0;
-		// 指定进行子流程时引用的附着使用的布局方式
+		// Specify the layout we would like the attachment to have during a subpass that uses this reference: color buffer with optimal performance
+		// 指定进行子流程时引用的附着使用的布局方式：颜色缓冲并且有最佳性能
 		colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-		// 描述子流程
+		/* Create subpass */
+		/* 创建渲染子流程 */
+
+		// Construct the instance that hold information regarding the subpass of render pass
+		// 构造一个持有 渲染子流程 信息的实例
 		VkSubpassDescription subpass{};
+		// Specify that this is a graphics subpass
 		// 指定这是一个图形渲染的子流程
 		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		// 指定引用的颜色附着
+		// Specify the amount of the color reference
+		// 指定引用的颜色附着的数目
 		subpass.colorAttachmentCount = 1;
+		// Specify the color reference
+		// 指定引用的颜色附着
 		subpass.pColorAttachments = &colorAttachmentRef;
+		// The index of the attachment in this array is directly referenced from the fragment shader, i.e. outColor
+		// 此数组中附件的索引是直接从片段着色器引用的，即 outColor
 
-		// 配置子流程依赖
+		/* Specify the dependency of the subpass */
+		/* 配置子流程依赖 */
+		// Construct the instance that hold information of the dependency of the subpass
+		// 构造一个持有 子流程依赖 信息的实例
 		VkSubpassDependency dependency{};
+		// 
 		// src 指的渲染流程开始前的子流程，dst 表示渲染阶段结束后的子流程
 		// 指定被依赖的子流程的索引
 		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+		// 
 		// 依赖被依赖的子流程的索引
 		dependency.dstSubpass = 0;
+		// 
 		// 需要等待颜色附着输出这一管线阶段
 		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		// 
 		// 子流程将进行的操作类型
 		dependency.srcAccessMask = 0;
+		// 
 		// 指定需要等待的管线阶段
 		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		// 
 		// 子流程将进行的操作类型
 		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-		// 渲染流程
+		/* Create render pass */
+		/* 创建渲染通道 */
+		// Construct the instance that hold information of the render pass
+		// 构造一个持有 渲染通道 信息的实例
 		VkRenderPassCreateInfo renderPassInfo{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		// Specify the amount of the color attachment
+		// 指定颜色附着的数目
 		renderPassInfo.attachmentCount = 1;
+		// Specify the color attachment
+		// 指定颜色附着
 		renderPassInfo.pAttachments = &colorAttachment;
+		// Specify the amount of the subpass
+		// 指定渲染子阶段的数目
 		renderPassInfo.subpassCount = 1;
+		// Specify the subpass
+		// 指定渲染子阶段
 		renderPassInfo.pSubpasses = &subpass;
+		// Specify the amount of the dependency of the subpass
+		// 指定子流程依赖的数目
 		renderPassInfo.dependencyCount = 1;
+		// Specify the dependency of the subpass
+		// 指定子流程依赖
 		renderPassInfo.pDependencies = &dependency;
 
-		// 
-		// 
+		// Create the render pass based on the information above
+		// 基于以上信息创建渲染通道
 		if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create render pass!");
 		}
@@ -1226,11 +1301,14 @@ private:
 		// 将 2 个着色器阶段放入 shaderStages 的数组中，后面会用到
 		VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
-		/* Configured the fixed funtion stage */
-		/* 设置固定功能的阶段 */
+		/** Configured the fixed funtion stage **/
+		/** 设置固定功能的阶段 **/
 
-		// 
-		// 用来描述传递给顶点着色器的顶点数据格式，因为目前是硬编码顶点数据，所以其实不用描述，赋值 0
+		/* Configure the information of the input */
+		/* 配置输入的信息 */
+
+		// Specify the format of the vertex data that will be passed to the vertex shader
+		// 用来描述传递给顶点着色器的顶点数据格式
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
@@ -1238,18 +1316,19 @@ private:
 
 		// Acquire the binding information of the vertex data
 		// 获取顶点数据的绑定信息
+		//		Bindings: spacing between data and whether the data is per-vertex or per-instance (see instancing)
+		//		绑定：数据之间的间距以及数据是按顶点还是按实例
 		auto bindingDescription = Vertex::getBindingDescription();
 		// Acquire the attribute information of the vertex data
 		// 获取顶点数据中的属性
+		//		Attribute descriptions: type of the attributes passed to the vertex shader, which binding to load them from and at which offset
+		//		属性描述：传递到顶点着色器的属性类型，从哪个绑定加载这些属性以及偏移量
 		auto attributeDescriptions = Vertex::getAttributeDescriptions();
 
-		/* Configure the information of the input */
-		/* 配置输入的信息 */
-
-		// The count of the binding
+		// The amount of the binding
 		// 输入顶点的绑定个数为 1
 		vertexInputInfo.vertexBindingDescriptionCount = 1;
-		// The count of the vertex attribute description is 2, i.e. vertex coordinate and vertex color
+		// The amount of the vertex attribute description is 2, i.e. vertex coordinate and vertex color
 		// 输入顶点的属性的大小为相应的大小为 2：顶点坐标和顶点颜色
 		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
 		// Reference the binding description of the vertex data as the bingding description of the input
@@ -1259,137 +1338,262 @@ private:
 		// 将顶点的属性作为输入的属性	
 		vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
+		/* Configure the information of the input assembly stage */
+		/* 配置输入装配阶段的信息 */
 
-		// 输入装配
-		// 下面这个结构体描述：顶点数据定义哪种类型的几何图元，以及是否启用几何图元重启
+		// Construct the instance that hold information on the creation of the input assembly stage
+		// 构造持有输入装配阶段的创建信息的结构体
 		VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
 		inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-		// 每三个顶点构成一个三角形图元
+		// Specify the topology of the input to be triangle
+		// 将输入的拓扑指定为三角形
+		//		VK_PRIMITIVE_TOPOLOGY_POINT_LIST: points from vertices
+		//		VK_PRIMITIVE_TOPOLOGY_POINT_LIST: 由顶点构成的点
+		//		VK_PRIMITIVE_TOPOLOGY_LINE_LIST: line from every 2 vertices without reuse
+		//		VK_PRIMITIVE_TOPOLOGY_LINE_LIST: 由 2 个顶点构成的线，不重复使用
+		//		VK_PRIMITIVE_TOPOLOGY_LINE_STRIP: the end vertex of every line is used as start vertex for the next line
+		//		VK_PRIMITIVE_TOPOLOGY_LINE_STRIP: 每条线的结束顶点用作下一条线的开始顶点
+		//		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST: triangle from every 3 vertices without reuse
+		//		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST: 由 3 个顶点构成的三角形，不重复使用
+		//		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP: the second and third vertex of every triangle are used as first two vertices of the next triangle
+		//		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP: 每个三角形的第二个和第三个顶点用作下一个三角形的前两个顶点
 		inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+		// Set the primitive restart to be disabled
+		// 不启用几何图元重启
+		// TODO: (Don't know right now) Element buffer allows you to perform optimizations like reusing vertices. If you set the primitiveRestartEnable member to VK_TRUE,
+		//		then it's possible to break up lines and triangles in the _STRIP topology modes by using a special index of 0xFFFF or 0xFFFFFFFF
+		//		元素缓冲区允许您执行优化，例如重用顶点。如果将 primitiveRestartEnable 成员设置为 VK_TRUE，则可以使用 0xFFFF 或 0xFFFFFFFF 的特殊索引来分解 _STRIP 拓扑模式中的直线和三角形
 		inputAssembly.primitiveRestartEnable = VK_FALSE;
 
-		// 
-		// 定义视口
-		
-		// 
-		// 定义裁剪矩形
-
-		// 
-		// 组合视口和裁剪矩形
+		// Construct the instance that hold information on the creation of the viewport stage
+		// 构造持有视口阶段的创建信息的结构体
 		VkPipelineViewportStateCreateInfo viewportState{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
 		viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-		// 
-		// 
+		// Specify the amount of viewport at the pipeline creation time
+		// 在创建管线的时候指定视口的数目为 1
 		viewportState.viewportCount = 1;
-		// 
-		// 
+		// Specify the amount of scissor at the pipeline creation time
+		// 在创建管线的时候指定裁剪矩形的数目为 1
 		viewportState.scissorCount = 1;
 
-		// 光栅化
+		/* Configure the information of the rasterization stage */
+		/* 配置光栅化阶段的信息 */
+
+		// Construct the instance that hold information on the creation of the rasterization stage
+		// 构造持有光栅化阶段的创建信息的结构体
 		VkPipelineRasterizationStateCreateInfo rasterizer{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
 		rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-		// 丢弃近平面和远平面外的片段
+		// Disable the depth clamp function, so as to discard the fragments that are beyond the near and far planes
+		// 关闭 depth clamp 功能，即丢弃近平面和远平面外的片段
+		//		Depth clamp is useful in some special cases like shadow maps. Using depth clamp requires enabling a GPU feature.
+		//		Depth clamp 在某些特殊情况下很有用，如阴影贴图。使用 depth clamp （深度钳？）需要启用GPU功能。
 		rasterizer.depthClampEnable = VK_FALSE;
-		// 允许所有几何图元通过光栅化
+		// Allow all geometry passes through the rasterizer stage, set to VK_TRUE then geometry never pass
+		// 允许所有几何图元通过光栅化，若设置为 VK_TRUE 则不允许所有几何通过
 		rasterizer.rasterizerDiscardEnable = VK_FALSE;
-		// 指定几何图元生成片段（像素）的方式，整个多边形包括内部，其他 mode 需要启用 GPU 特性 
+		// Specify how fragments are generated for geometry
+		// 指定几何图元生成片段（像素）的方式，整个多边形包括内部
+		//		VK_POLYGON_MODE_FILL: fill the area of the polygon with fragments
+		//		VK_POLYGON_MODE_FILL: 用片元填充多边形区域
+		//		VK_POLYGON_MODE_LINE: polygon edges are drawn as lines
+		//		VK_POLYGON_MODE_LINE: 多边形边绘制为直线
+		//		VK_POLYGON_MODE_POINT: polygon vertices are drawn as points
+		//		VK_POLYGON_MODE_POINT: 多边形顶点绘制为点
+
+		//		Using any mode other than fill requires enabling a GPU feature
+		//		使用填充以外的任何模式都需要启用GPU功能
 		rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-		// 线宽大于 1 需要启用 GPU 特性
+		
+		// Specify the thickness of lines in terms of number of fragments
+		// 根据片元的数量指定线条的厚度
+		//		Any line thicker than 1.0f requires you to enable the wideLines GPU feature
+		//		线宽大于 1 则需要启用 GPU 的 wideLines 特性
 		rasterizer.lineWidth = 1.0f;
-		// 剔除背面
+		// Specify the type of face culling to the back face
+		// 指定剔除的面为背面
 		rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-		// 顺时针的定点顺序是正面
+		// Specify the vertex order for faces to be considered front-facing
+		// 指定顺时针的定点顺序为正面
 		rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
-		// 添加一个常量值或者一个基于片段所处线段斜率值得到的变量值到深度上。对阴影贴图有用，这里关闭
+		// Disable depth bias
+		// 关闭 depth bias 功能
+		// The rasterizer can alter the depth values by adding a constant value or biasing them based on a fragment's slope. This is sometimes used for shadow mapping
+		// 添加一个常量值或者一个基于片段所处线段斜率值得到的变量值到深度上，这个功能有时候对阴影贴图有用
 		rasterizer.depthBiasEnable = VK_FALSE;
 
-		// 多重采样，组合多个不同多边形产生的片段的颜色来决定最终的像素颜色，代价较小，但需要启用 GPU 特性，暂时关闭
+		// Construct the instance that hold information on the creation of the multisampling stage
+		// 构造持有多重采样阶段的创建信息的结构体
+		//		Multisampling combines the fragment shader results of multiple polygons that rasterize to the same pixel
+		//		多重采样将光栅化到同一个像素的多个多边形的片段着色器的结果组合起来
 		VkPipelineMultisampleStateCreateInfo multisampling{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
 		multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+		// Disable multisampling. Multisampling need GPU features to support
+		// 不启用多重采样，若要启用多重采样需要启用 GPU 的特性
 		multisampling.sampleShadingEnable = VK_FALSE;
+		// Specify the sampling for rasterization to be 1 sample per pixel
+		// 设置光栅化的采样方式为每像素 1 个采样
 		multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
-		// 深度和模板测试先不管
+		/* Just jump the depth and stencil testing for simplicity */
+		/* 为了避免示例过于复杂，先跳过深度和模板测试阶段 */
 		
-		// 颜色混合
+		/* Color blending */
+		/* 颜色混合 */
+		//		After a fragment shader has returned a color, it needs to be combined with the color that is already in the framebuffer
+		//		片段着色器返回颜色后，需要将其与帧缓冲区中已存在的颜色组合
+		
+		/* Configure the per attached framebuffer color blending settings */
+		/* 设置对每一个帧缓冲的颜色混合参数 */
+		//		The first way of color blending: mix the old and new value to produce a final color in a per framebuffer order (disabled in here)
+		//		第一种混合方式：对每个绑定的帧缓冲进行单独的颜色混合配置（不使用这种方式，所以先关闭）
+		//			If blendEnable is set to VK_FALSE, then the new color from the fragment shader is passed through unmodified.
+		//			如果blendEnable设置为VK_FALSE，则片段着色器中的新颜色将不经修改地通过。
+		//			Otherwise, the two mixing operations are performed to compute a new color.
+		//			否则，执行两个混合操作以计算新的颜色。
+		//			The resulting color is AND'd with the colorWriteMask to determine which channels are actually passed through.
+		//			生成的颜色与colorWriteMask进行AND运算，以确定实际通过的通道。
 
-		// 第一种混合方式：对每个绑定的帧缓冲进行单独的颜色混合配置，先关闭
+		// Construct the instance that hold the color blending information per attached framebuffer
+		// 构造一个持有对于每一个帧缓冲的颜色混合附件的结构体
 		VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+		// Specify the information that will participate in the color blending
+		// 指名需要参与颜色混合的通道有哪些
 		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+		// Disable the color blending for per framebuffer, so as we don't use the first method
+		// 关闭对于每个帧缓冲的颜色混合，不使用第一种颜色混合方法
 		colorBlendAttachment.blendEnable = VK_FALSE;
 
-		// 可以设置全局混合常量
+		/* Configure the global color blending settings */
+		/* 设置全局颜色混合参数 */
+
+		// Construct the instance that hold information on the creation of the color blending stage
+		// 构造持有颜色混合阶段的创建信息的结构体
 		VkPipelineColorBlendStateCreateInfo colorBlending{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
 		colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 		
+		// The first way of color blending: combine the old and new value using a bitwise operation, disabled now
 		// 第二种混合方式：使用位运算组合旧值和新值来混合颜色，这里关闭，开启的话会禁用第一种
 		colorBlending.logicOpEnable = VK_FALSE;
 		colorBlending.logicOp = VK_LOGIC_OP_COPY; //  Optional
+		// TODO:Specify the amount of color blending attachment for the color blending
+		// 指名颜色混合所要使用的颜色混合附件的数目（目前还不是很清晰）
 		colorBlending.attachmentCount = 1;
+		// TODO:Specify the color blending attachment for the color blending
+		// 指名颜色混合所要使用的颜色混合附件
 		colorBlending.pAttachments = &colorBlendAttachment;
 		colorBlending.blendConstants[0] = 0.0f; //  Optional
 		colorBlending.blendConstants[1] = 0.0f; //  Optional
 		colorBlending.blendConstants[2] = 0.0f; //  Optional
 		colorBlending.blendConstants[3] = 0.0f; //  Optional
 
-		// 动态状态
-		// 填写以下结构体指定要动态修改的状态
+		/* Configure dynamic states */
+		/* 配置动态阶段 */
+
+		// Specify the dynamic state, which can be changed without recreating the pipeline at draw time
+		// 指定动态阶段，动态阶段在绘制时无需重新创建管线即可更改
 		std::vector<VkDynamicState> dynamicStates = {
 			VK_DYNAMIC_STATE_VIEWPORT,
 			VK_DYNAMIC_STATE_SCISSOR
 		};
+		// Construct the instance that holds information about creating dynamic states
+		// 构造一个持有动态阶段的创建信息的实例
 		VkPipelineDynamicStateCreateInfo dynamicState{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
 		dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+		// Specify the amount of the dynamics state
+		// 指定动态阶段的数目
 		dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+		// Specify the dynamics state
+		// 指定动态阶段
 		dynamicState.pDynamicStates = dynamicStates.data();
 
-		// 管线布局
-		// 使用 layout 定义着色器的 uniform，虽然现在不用，但是也要定义
+		/* Create the pipeline layout */
+		/* 创建管线布局 */
+		// To support uniform values in shaders, commonly used to pass the transformation matrix to the vertex shader, or to create texture samplers in the fragment shader
+		// TODO: 支持着色器中的 uniform 值，通常用于将变换矩阵传递到顶点着色器，或在片段着色器中创建纹理采样器，虽然现在不用，但是也要定义
+
+		// TODO: passing dynamic values to shaders?
+		// TODO：使用 layout 定义着色器的 uniform？
+		// Construct the instance that holds information about creating pipeline layout
+		// 构造一个持有管线布局的创建信息的实例
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = 0; //  Optional
-		pipelineLayoutInfo.pushConstantRangeCount = 0; //  Optional
+		pipelineLayoutInfo.setLayoutCount = 0; // Optional
+		pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
+		pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
+		pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
+		// Create the pipeline layout based on the information above
+		// 使用以上信息创建管线的布局
 		if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create pipeline layout!");
 		}
 
-		// 创建管线对象
+		/* Create the graphics pipeline */
+		/* 创建图形管线 */
+
+		// Construct the instance that holds information about creating graphics pipeline
+		// 构造一个持有图形管线的创建信息的实例
 		VkGraphicsPipelineCreateInfo pipelineInfo{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
 		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+		// Specify the amount of the shader stage in the graphics pipeline
+		// 指定图形管线中的着色器阶段的数目
 		pipelineInfo.stageCount = 2;
+		// Specify the shader stages in the graphics pipeline
+		// 指定图形管线中的着色器阶段
 		pipelineInfo.pStages = shaderStages;
+		// Specify the vertex input information in the graphics pipeline
+		// 指定图形管线中的顶点输入的信息
 		pipelineInfo.pVertexInputState = &vertexInputInfo;
+		// Specify the input assembly stage in the graphics pipeline
+		// 指定图形管线中的输入装配阶段
 		pipelineInfo.pInputAssemblyState = &inputAssembly;
+		// Specify the viewport stage in the graphics pipeline
+		// 指定图形管线中的视角阶段
 		pipelineInfo.pViewportState = &viewportState;
+		// Specify the rasterization stage in the graphics pipeline
+		// 指定图形管线中的光栅化阶段
 		pipelineInfo.pRasterizationState = &rasterizer;
+		// Specify the multisampling stage in the graphics pipeline
+		// 指定图形管线中的多重采样阶段
 		pipelineInfo.pMultisampleState = &multisampling;
+		// Specify the color blending stage in the graphics pipeline
+		// 指定图形管线中的颜色混合阶段
 		pipelineInfo.pColorBlendState = &colorBlending;
+		// Specify the dynamic state stage in the graphics pipeline
+		// 指定图形管线中动态阶段
 		pipelineInfo.pDynamicState = &dynamicState;
+		// Specify the pipeline layout in the graphics pipeline
+		// 指定图形管线中管线布局
 		pipelineInfo.layout = pipelineLayout;
+		// Specify the render pass in the graphics pipeline
+		// 指定图形管线中渲染通道
 		pipelineInfo.renderPass = renderPass;
+		// Specify the amount of the subpass in the graphics pipeline
+		// 指定图形管线中的渲染子阶段的数目
 		pipelineInfo.subpass = 0;
 
+		// Specify NOT to create a new graphics pipeline by deriving from an existing pipeline
 		// 用于以一个创建好的图形管线为基础创建一个新的图形管线
 		pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; //  Optional
 
-		// 创建管线对象
+		// Create the graphics pipeline based on the information above
+		// 使用以上信息创建图形管线
 		if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create graphics pipeline!");
 		}
@@ -1402,50 +1606,75 @@ private:
 		vkDestroyShaderModule(device, vertShaderModule, nullptr);
 	}
 
-	/*  */
-	/* 帧缓冲 */
+	/* Create frame buffer */
+	/* 创建帧缓冲 */
 	void createFramebuffers() {
+		// Resize the size of the frame buffer in swap chain to the size of the image views
+		// 将交换链中的帧缓冲的容器大小改为图像视图的容器大小
 		swapChainFramebuffers.resize(swapChainImageViews.size());
-		// 为交换链的每一个图像视图对象创建帧缓冲
-
+		
+		// Iterate through the image views and create framebuffers from them
+		// 遍历每个图像视图并从中创建帧缓冲
 		for (size_t i = 0; i < swapChainImageViews.size(); i++) {
 			VkImageView attachments[] = {
 				swapChainImageViews[i]
 			};
 
+			// Construct the instance that holds information about creating frame buffer
+			// 构造一个持有帧缓冲的创建信息的实例
 			VkFramebufferCreateInfo framebufferInfo{};
 			// Explicitly specify the structure type
 			// 明确指定结构的类型
 			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-			// 指定帧缓冲需要兼容的渲染流程对象
+			// Specify the render pass that the framebuffer needs to be compatible with
+			// 指定帧缓冲需要兼容的渲染通道
 			framebufferInfo.renderPass = renderPass;
-			// 指定附着
+			// Specify the amount of the VkImageView objects that should be bound to the respective attachment
+			// 指定需要被绑定到对应的颜色附着的图像视图的数目
 			framebufferInfo.attachmentCount = 1;
+			// Specify the VkImageView objects that should be bound to the respective attachment
+			// 指定需要被绑定到对应的颜色附着的图像视图
 			framebufferInfo.pAttachments = attachments;
+			// Specify the width of the frame buffer be the width of the extent of the swap chain
+			// 指定帧缓冲的宽度为交换链的画幅的宽度
 			framebufferInfo.width = swapChainExtent.width;
+			// Specify the height of the frame buffer be the width of the extent of the swap chain
+			// 指定帧缓冲的高度为交换链的画幅的高度
 			framebufferInfo.height = swapChainExtent.height;
+			// Specify the layer of the frame buffer to be 1
 			// 帧缓冲图像层数
 			framebufferInfo.layers = 1;
 
+			// Create the frame buffer based on the information above
+			// 使用以上信息创建帧缓冲
 			if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create framebuffer!");
 			}
 		}
 	}
 
-	/*  */
-	/* 指令缓冲 */
+	/* Create command pool */
+	/* 创建指令缓冲 */
 	void createCommandPool() {
+		// Search for and return the queue family index we desired
+		// 查找并返回需求的队列族的索引
 		QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
 
+		// Construct the instance that holds information about creating command pool
+		// 构造一个持有指令池的创建信息的实例
 		VkCommandPoolCreateInfo poolInfo{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
 		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		// Allow command buffers to be rerecorded individually, without this flag they all have to be reset together
+		// 允许命令缓冲单独重新记录命令，如果没有此标志，则必须将所有命令缓冲一起重置
 		poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-		// 绘制指令可以被提交给图形操作的队列
+		// Chosen the graphics queue family because we are recording commands for drawing
+		// 选择将绘制指令提交给图形队列族，因为我们正在录制绘图命令
 		poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
 
+		// Create command pool based on the information above
+		// 使用以上信息创建指令缓冲
 		if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create command pool!");
 		}
@@ -1454,7 +1683,7 @@ private:
 	/* Create vertex buffer */
 	/* 创建顶点数组 */
 	void createVertexBuffer() {
-		// Construct the instance that hold information of creating buffer
+		// Construct the instance that holds information of creating buffer
 		// 构造一个持有 buffer 创建信息的实例
 		VkBufferCreateInfo bufferInfo{};
 		// Explicitly specify the structure type
@@ -1552,92 +1781,150 @@ private:
 
 	}
 
-	/*  */
-	/* 分配指令缓冲 */
+	/* Create command buffers */
+	/* 创建指令缓冲 */
 	void createCommandBuffers() {
+		// 
 		// 绘制操作是在帧缓冲上进行的
 		commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 
+		// Construct a instance that hold information on the allocation of the command buffer
+		// 构造一个持有 命令缓冲 的分配信息的实例
 		VkCommandBufferAllocateInfo allocInfo{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		// The command pool that the command buffer allocated from
 		// 使用的指令池和需要分配的指令缓冲个数
 		allocInfo.commandPool = commandPool;
-		// 主要缓冲指令对象，可被提交到队列执行，不能被其他指令缓冲对象调用
+		// Set the level to be primary: Can be submitted to a queue for execution, but cannot be called from other command buffers
+		// 分配的级别设置为主要，可被提交到队列执行，不能被其他指令缓冲对象调用
 		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		// Specify the amount of the command buffer to be the size of the commandBuffers, which is 2
+		// 指定命令缓冲的大小为 commandBuffers 的大小，也即 2
 		allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
 
+		// Allocate command buffers based on the information above
+		// 基于以上信息分配命令缓冲
 		if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
 			throw std::runtime_error("failed to allocate command buffers!");
 		}
 	}
 
-	/*  */
+	/* Record command to the command buffer */
 	/* 记录指令到指令缓冲 */
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
+		// Construct a instance that hold information on how to start the command buffer
+		// 构造一个持有命令缓冲的启动信息的实例
 		VkCommandBufferBeginInfo beginInfo{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		
-		// 可以使得在上一帧还未结束渲染时，提交下一帧的渲染指令 // TODO：
+		// TODO：可以使得在上一帧还未结束渲染时，提交下一帧的渲染指令
 
+		// Begin recording command to the command buffer
+		// 开始向指令缓冲中记录指令
 		if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
 			throw std::runtime_error("failed to begin recording command buffer!");
 		}
 
-		// 开始渲染流程
+		/* Starting a render pass */
+		/* 开始渲染通路 */
+ 
+		// Construct a instance that hold information on the allocation of the command buffer
+		// 构造一个持有渲染通路的启动信息的实例
 		VkRenderPassBeginInfo renderPassInfo{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		// Specify the render pass
+		// 指定渲染通路
 		renderPassInfo.renderPass = renderPass;
+		// Specify the frame buffer according to the image index
+		// 指定帧缓存，参考图像的索引
 		renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
+		// Specify the offset of the render area
+		// 指定渲染区域的偏移量
 		renderPassInfo.renderArea.offset = { 0, 0 };
+		// Specify the extent of the render area
+		// 指定渲染区域的画幅
 		renderPassInfo.renderArea.extent = swapChainExtent;
 
+		// Specify the color that is used to clear the image data
 		// 设置清除颜色
 		VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
+		// Specify the amount of the clear color
+		// 指定用于清除的颜色的数目
 		renderPassInfo.clearValueCount = 1;
+		// Specify the vaule of the clear color
+		// 指定用于清除的颜色
 		renderPassInfo.pClearValues = &clearColor;
 		
-		// VK_SUBPASS_CONTENTS_INLINE 指的是指令只在主要指令缓冲，没有辅助指令缓冲
+		// Begin the render pass
+		// 渲染通路开始
+		//		VK_SUBPASS_CONTENTS_INLINE: the render pass commands will be embedded in the primary command buffer itself and no secondary command buffers will be executed
+		//		VK_SUBPASS_CONTENTS_INLINE：渲染通路的命令将嵌入主命令缓冲本身，不会执行任何辅助命令缓冲中的指令
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 			
-			// 将这个 command buffer 绑定到已创建那个图形管线
+			// Bind the graphics pipeline to the command buffer
+			// 将这个指令缓冲绑定到已创建那个图形管线
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
-			// 定义视口
+			/* Configure the information about viewport */
+			/* 配置视口的信息 */
+
+			// A viewport basically describes the region of the framebuffer that the output will be rendered to
+			// 视口基本上描述了 输出图像将会被渲染到帧缓冲的哪个区域
 			VkViewport viewport{};
+			// Configure the coordinate of the viewport
+			// 配置视口的坐标
 			viewport.x = 0.0f;
 			viewport.y = 0.0f;
+			// Configure the width and height of the viewport to be the width and height of the swap chain
+			// 配置视口的宽高为交换链的宽高
 			viewport.width = static_cast<float>(swapChainExtent.width);
 			viewport.height = static_cast<float>(swapChainExtent.height);
+			// Configure the range of depth values to use for the framebuffer to the standard values
+			// 配置帧缓冲区使用的深度值范围为标准值
 			viewport.minDepth = 0.0f;
 			viewport.maxDepth = 1.0f;
+			// Set the viewport in the command buffer
+			// 在命令缓冲中设置视口
 			vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
-			// 定义裁剪矩形
+			// Specify the information about scissor
+			// 定义裁剪矩形的信息
 			VkRect2D scissor{};
+			// Specify the offset coordinate of the scissor to be 0
+			// 配置裁剪矩形的偏移量均为 0
 			scissor.offset = { 0, 0 };
+			// Specify the extent of the scissor to be the extent of the swap chain
+			// 配置裁剪矩形的画幅为交换链的画幅
 			scissor.extent = swapChainExtent;
-			// TODO:？？
+			// Set the scissor in the command buffer
+			// 在命令缓冲中设置裁剪矩形
 			vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
+			// Specify the buffers to be bind for vertex buffer
 			// 需要绑定的 buffer 包括哪些
 			VkBuffer vertexBuffers[] = { vertexBuffer };
-			// 需要绑定的 buffer 所对应的 offset 有哪些
+			// Specify the offset for the buffer with the same index
+			// 需要绑定的缓冲所对应的偏移量
 			VkDeviceSize offsets[] = { 0 };
-			// 将 vertexbuffer 绑定到 binding：从第 0 个 binding 位置起，绑定 1 个 binding，绑定的 buffer 是 vertexbuffers，从 vertexbuffer 的 offsets 的位置开始读
+			// Bind the vertexBuffers to the binding: bind 1 binding at binding 0, the buffer is vertexBuffers, and the offsets of the vertexBuffers
+			// 将 vertexBuffers 绑定到 binding：从第 0 个 binding 位置起，绑定 1 个 binding，绑定的 buffer 是 vertexbuffers，从 vertexbuffer 的 offsets 的偏移量开始读
 			vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-			// 绘制三角形，提交绘制操作到指令缓冲
+			// Issue the draw command
+			// 提交绘制操作到指令缓冲
 			vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
 		
-		// 结束渲染流程
+		// End the render pass
+		// 渲染通路结束
 		vkCmdEndRenderPass(commandBuffer);
 
+		// End recording command to the command buffer
 		// 结束指令到指令缓冲
 		if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
 			throw std::runtime_error("failed to record command buffer!");
@@ -1841,7 +2128,7 @@ private:
 			/* Set the resolution to customized resolution if allowed */
 			/* 设置为当前帧缓冲的实际大小 */
 			// Acquire the current extent of the frame buffer
-			// 获取当前的窗口的帧缓存的大小
+			// 获取当前的窗口的帧缓冲的大小
 			int width, height;
 			glfwGetFramebufferSize(window, &width, &height);
 
@@ -1873,7 +2160,7 @@ private:
 		// 获取可用的窗口表面特性
 		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
 
-		// Get the count of the format that window surface supported by the physical device
+		// Get the amount of the format that window surface supported by the physical device
 		// 获取物理设备的窗口表面所支持的格式的数目
 		uint32_t formatCount;
 		vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
@@ -1889,7 +2176,7 @@ private:
 			vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
 		}
 		
-		// Get the count of the presentation mode that window surface supported by the surface of the physical device
+		// Get the amount of the presentation mode that window surface supported by the surface of the physical device
 		// 获取物理设备的所支持的表面的呈现格式的数目
 		uint32_t presentModeCount;
 		vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
@@ -1946,7 +2233,7 @@ private:
 		// 构造一个持有 队列族索引 的实例
 		QueueFamilyIndices indices;
 		
-		// Get the count of the queueFamily that the physical device support
+		// Get the amount of the queueFamily that the physical device support
 		// 获取物理设备所支持的队列族的个数
 		uint32_t queueFamilyCount = 0;
 		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
@@ -2000,7 +2287,7 @@ private:
 	/* Check if the device extension is supported */
 	/* 检测是否支持所需的设备扩展 */
 	bool checkDeviceExtensionSupport(VkPhysicalDevice device) {
-		// Get the count of the device extension supported
+		// Get the amount of the device extension supported
 		// 获取可用的设备扩展的个数
 		uint32_t extensionCount;
 		vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
@@ -2063,7 +2350,7 @@ private:
 		// Initialize the counter
 		// 初始化计数器
 		uint32_t layerCount;
-		// Get the count of the validation layers available
+		// Get the amount of the validation layers available
 		// 获取可用的校验层的数目
 		vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
