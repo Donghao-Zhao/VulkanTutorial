@@ -71,8 +71,8 @@ const uint32_t WIDTH = 800;
 // 窗口的高
 const uint32_t HEIGHT = 600;
 
-// 
-// 可以同时并行处理的帧数
+// Allow the rendering of one frame to not interfere with the recording of the next
+// 允许这帧的渲染不干扰下帧的录制
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
 /* The validation layers that we would like to enable */
@@ -358,23 +358,23 @@ private:
 	// 指令缓冲
 	std::vector<VkCommandBuffer> commandBuffers;
 
-	// 
-	// 图像被获取，可以开始渲染的信号量
+	// Create the image available semaphores, indicating the image is captured and ready to render
+	// 图像已被获取，可以开始渲染的信号量
 	std::vector<VkSemaphore> imageAvailableSemaphores;
 
-	// 
-	// 渲染已经结果，可以开始呈现的信号量
+	// Create the render finished semaphores, indicating the render is complete and ready to present
+	// 图像已被渲染完成，可以开始呈现的信号量
 	std::vector<VkSemaphore> renderFinishedSemaphores;
 
-	// 
-	// 为每一帧创建栅栏，来进行 CPU 和 GPU 之间的同步
+	// Create the in flight fences, for synchronization between CPU and GPU, make sure only one frame is rendering at a time
+	// 为每一帧创建屏障，来进行 CPU 和 GPU 之间的同步
 	std::vector<VkFence> inFlightFences;
 
-	// 
+	// Trace the current frame for rendering
 	// 追踪当前渲染的是哪一帧
 	uint32_t currentFrame = 0;
 
-	// 
+	// Flag for if the fram buffer is resized
 	// 标记窗口是否发生改变
 	bool framebufferResized = false;
 
@@ -397,17 +397,20 @@ private:
 		// 存储创建的窗口句柄（窗口宽、窗口高、窗口名称、显示器序号）
 		window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
 
-		// 
+		// Store the this pointer in the data of the GLFW window
 		// 将 this 指针存储在 GLFW 窗口相关的数据中
 		glfwSetWindowUserPointer(window, this);
 
-		// 
+		// Set the callback function to deal with the resize of the window
 		// 设置处理窗口大小改变的回调函数
 		glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 	}
 
-	/*  */
-	/* 静态函数才能用作回调函数 */
+	/* Function that deals with the resize of the window */
+	/* 处理窗口大小改变的事件的函数 */
+	//		The reason that we're creating a static function as a callback is because GLFW does not know how to properly call a member function
+	//			with the right this pointer to our HelloTriangleApplication instance.
+	//		我们创建一个静态函数作为回调的原因是，在我们的 HelloTriangleApplication 实例中，GLFW 不知道如何正确地通过 this 指针调用成员函数
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
 		auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
 		app->framebufferResized = true;
@@ -455,8 +458,8 @@ private:
 		// Create command buffer
 		// 创建指令缓冲
 		createCommandBuffers();
-		// 
-		// 
+		// Create synchronization object
+		// 创建同步对象
 		createSyncObjects();
 	}
 
@@ -470,13 +473,14 @@ private:
 			// 循环检测事件并处理，如是否按下了关闭按键等
 			glfwPollEvents();
 			
-			// 
+			// Draw a frame
 			// 绘制一帧
 			drawFrame();
 		}
 
-		// 
-		// 等待逻辑设备操作结束执行时才销毁窗口
+		// Wait for the logical device to finish operations before exiting mainLoop and destroying the window,
+		//		because all of the operations in drawFrame are asynchronous
+		// 等待逻辑设备操作结束执行时才销毁窗口，因为 drawFrame 中的所有操作都是异步的
 		vkDeviceWaitIdle(device);
 	}
 
@@ -524,11 +528,17 @@ private:
 		// 释放分配给顶点数组的存储空间
 		vkFreeMemory(device, vertexBufferMemory, nullptr);
 
-		// 
+		// Destroy the synchronization object
 		// 摧毁信号量
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+			// Destroy the image available semaphores
+			// 摧毁图像是否准备好的信号量
 			vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
+			// Destroy the render finished semaphores
+			// 摧毁渲染是否结束的信号量
 			vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
+			// Destroy the in flight fences
+			// 摧毁正在绘制屏障
 			vkDestroyFence(device, inFlightFences[i], nullptr);
 		}
 
@@ -566,20 +576,18 @@ private:
 	/* Create window surface */
 	/* 重建交换链 */
 	void recreateSwapChain() {
-		// While the window is minimized
-		// 在最小化状态时
+		// While the window is minimized, always acquire the current extent of the frame buffer
+		// 在最小化状态时，一直获取当前的窗口的帧缓冲的大小
 		int width = 0, height = 0;
 		glfwGetFramebufferSize(window, &width, &height);
 		while (width == 0 || height == 0) {
-			// Acquire the current extent of the frame buffer
-			// 获取当前的窗口的帧缓冲的大小
 			glfwGetFramebufferSize(window, &width, &height);
 			// Monitor the event continuously
 			// 监测某些事件
 			glfwWaitEvents();
 		}
 
-		// 
+		// Wait for the logical device to be idle, prevent recreating the swap chain when the resources are in use
 		// 等待设备处于空闲状态，避免在对象使用过程中将其清除重建
 		vkDeviceWaitIdle(device);
 
@@ -950,7 +958,7 @@ private:
 		//		basic surface capabilities (min/max number of images in swap chain, min/max width and height of images)
 		//		基本表面功能（交换链中图像的最小/最大数量、图像的最小/最大宽度和高度）
 		//		surface formats (pixel format, color space)
-		//		表面格式（像素格式、色欲）
+		//		表面格式（像素格式、色域）
 		//		available presentation modes
 		//		可用的呈现模式
 		SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
@@ -1191,27 +1199,32 @@ private:
 
 		/* Specify the dependency of the subpass */
 		/* 配置子流程依赖 */
+		//		Image layout transitions are controlled by subpass dependencies, which specify memory and execution dependencies between subpasses
+		//		图像布局转换由子进程依赖项控制，这些依赖项指定子进程之间的内存和执行的依赖项
+
+		//		Configure built in dependencies that take care of the transition at the start of the render pass and at the end of the render pass
+		//		配置在渲染过程开始和结束时负责转换的内置依赖项
+		
 		// Construct the instance that hold information of the dependency of the subpass
-		// 构造一个持有 子流程依赖 信息的实例
+		// 构造一个持有子流程的依赖信息的实例
 		VkSubpassDependency dependency{};
-		// 
-		// src 指的渲染流程开始前的子流程，dst 表示渲染阶段结束后的子流程
-		// 指定被依赖的子流程的索引
+		// Specify the source of the dependency, which is the implicit subpass before the render pass
+		// 指定依赖提供者，为隐晦的渲染流程开始前的子流程的索引
 		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-		// 
-		// 依赖被依赖的子流程的索引
+		// Specify the destination of the dependency: the index 0 refers to our subpass, which is the first and only one
+		// 指定依赖消费者为索引 0 的子流程：之前创建的 subpass，也即第一个也是唯一一个
 		dependency.dstSubpass = 0;
-		// 
-		// 需要等待颜色附着输出这一管线阶段
+		// Specify to wait on the color attachment output stage, wait for the swap chain to finish reading from the image
+		// 指定需要等待颜色附着输出这一管线阶段
 		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		// 
-		// 子流程将进行的操作类型
+		// Specify to wait on the color attachment stage itself
+		// 指定需要等待颜色附着输出阶段本身
 		dependency.srcAccessMask = 0;
-		// 
-		// 指定需要等待的管线阶段
+		// Specify the waiter stage, which is the color attachment output stage
+		// 指定需要等待颜色附着输出这一管线阶段
 		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		// 
-		// 子流程将进行的操作类型
+		// Specify the waiter operation, which is the color attachment write operation
+		// 指定需要等待颜色附着输出阶段中的写操作
 		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
 		/* Create render pass */
@@ -1784,8 +1797,8 @@ private:
 	/* Create command buffers */
 	/* 创建指令缓冲 */
 	void createCommandBuffers() {
-		// 
-		// 绘制操作是在帧缓冲上进行的
+		// Resize the size of the commandBuffers to 2
+		// 将指令缓冲容器的大小设置为 2
 		commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 
 		// Construct a instance that hold information on the allocation of the command buffer
@@ -1931,28 +1944,41 @@ private:
 		}
 	}
 
-	/*  */
+	/* Create synchronization object */
 	/* 创建同步对象 */
 	void createSyncObjects() {
+		// Resize the image available semaphores contrainer to the number of the maximum frames in flight
+		// 将图像是否准备好的信号量的大小调整为最大正在绘制的帧数的大小
 		imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+		// Resize the render finished semaphores contrainer to the number of the maximum frames in flight
+		// 将渲染是否结束的信号量的大小调整为最大正在绘制的帧数的大小
 		renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+		// Resize the in flight fences contrainer to the number of the maximum frames in flight
+		// 将正在绘制屏障的大小调整为最大正在绘制的帧数的大小
 		inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
 
-		// 
-		// 
+		// Construct a instance that hold information on creating semaphore
+		// 构造一个持有信号量创建信息的实例
 		VkSemaphoreCreateInfo semaphoreInfo{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
 		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
+		// Construct a instance that hold information on creating fence
+		// 构造一个持有屏障的创建信息的实例
 		VkFenceCreateInfo fenceInfo{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
 		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-		// 设置初始状态为已发出信号
+		// Set the fence to be signaled to prevent the deadlock
+		// 设置初始状态为已发出信号来避免死锁
 		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
+		// For each frame in flight
+		// 对于每一个正在绘制的帧
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+			// Create semaphores and fence based on the information above
+			// 使用以上信息创建信号量和屏障
 			if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
 				vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
 				vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
@@ -1961,86 +1987,140 @@ private:
 		}
 	}
 
-	/*  */
-	/*  */
+	/* Draw a frame */
+	/* 绘制一帧 */
 	void drawFrame() {
-		// 等待当前帧所使用的指令缓冲结束执行
+		// Wait until the previous frame has finished, so that the command buffer and semaphores are available to use for the current frame
+		// 等待当前帧所使用的指令缓冲和信号量结束执行
 		vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
-		// 从交换链获取图像
+		// Acquire the image from the swap chain, disable the timeout
+		// 从交换链获取图像，禁用超时
 		uint32_t imageIndex;
-		// 第三个参数是图像获取的超时时间，无符号 64 位最大整数表示禁用获取超时
 		VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
-		// 如果交换链过期就重建
+		// If the swap chain is out of date
+		// 如果交换链过期
 		if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+			// Recreate the swap chain
+			// 重建交换链
 			recreateSwapChain();
 			return;
 		} else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
 			throw std::runtime_error("failed to acquire swap chain image!");
 		}
 
-		// 重置栅栏
+		// Reset the fence to the unsignaled state for the current frame, only reset the fence if we are submitting work
+		// 重置屏障至初始状态，只有当我们提交指令时才重置屏障
 		vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
+		// Reset the command buffer
+		// 重置指令缓冲
 		vkResetCommandBuffer(commandBuffers[currentFrame], /*VkCommandBufferResetFlagBits*/ 0);
+		// Record command to the command buffer
+		// 记录指令到指令缓冲
 		recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
 
-		// 提交指令缓冲
+		/* Specify the submit information */
+		/* 配置提交信息 */
+
+		// Construct a instance that hold information on the submission of the command buffer
+		// 构造一个持有提交指令缓冲信息的实例
 		VkSubmitInfo submitInfo{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
 		// 指定队列开始执行前需要等待的信号量，以及需要等待的管线阶段
+
+		// Specify we should wait the imageAvailableSemaphores semaphores before execution begins
+		// 指定指令开始执行前需要等待 imageAvailableSemaphores 信号量
 		VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
+		// Specify we should wait the stage of the graphics pipeline that writes to the color attachment before execution begins
+		// 指定指令开始执行前，需要等待写入颜色附件的图形管道的阶段
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+		// Specify the amount of the semaphores to wait on before execution begins
+		// 指定指令开始执行前，需要等待的信号量的数目
 		submitInfo.waitSemaphoreCount = 1;
+		// Specify which semaphores to wait on before execution begins
+		// 指定指令开始执行前，需要等待哪个信号量
 		submitInfo.pWaitSemaphores = waitSemaphores;
+		// Specify which stages of the pipeline to wait on before execution begins
+		// 指定指令开始执行前，需要等待图形管线中的哪个阶段
 		submitInfo.pWaitDstStageMask = waitStages;
 
-		// 指定实际被提交执行的指令缓冲对象
+		// Specify the amount of the command buffers that will be submitted
+		// 指定实际被提交执行的指令缓冲对象的数目
 		submitInfo.commandBufferCount = 1;
+		// Specify the command buffers that will be submitted
+		// 指定实际被提交执行的指令缓冲对象
 		submitInfo.pCommandBuffers = &commandBuffers[currentFrame];
 
-		// 只当在指令缓冲执行结束后发出信号的信号量对象
+		// Specify the semaphores, renderFinishedSemaphores, need to be signaled after the execution of the command buffer
+		// 指定在指令缓冲中的指令执行完成后需要被示意发出本帧的渲染已经完成的信号
 		VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };
+		// Specify the amount of the semaphores need to be signaled after the execution of the command buffer
+		// 指定在指令缓冲中的指令执行完成后需要被示意的信号量的数目
 		submitInfo.signalSemaphoreCount = 1;
+		// Specify the semaphores need to be signaled after the execution of the command buffer
+		// 指定在指令缓冲中的指令执行完成后需要被示意的信号量
 		submitInfo.pSignalSemaphores = signalSemaphores;
 
-		// 提交指令缓冲给图形指令队列，第四个参数指定缓冲执行结束后需要发起的信号栅栏对象
+		// Submit the command buffer to the graphics queue, and signal the inFlightFences after the execution of the command buffer
+		// 提交指令缓冲给图形指令队列，并在指令缓冲执行结束后对 inFlightFences 屏障对象示意
 		if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
 			throw std::runtime_error("failed to submit draw command buffer!");
 		}
 
-		// 配置呈现信息
+		/* Configure the presentation information */
+		/* 配置呈现信息 */
+
+		// Construct a instance that hold information on presentation
+		// 构造一个持有呈现信息的实例
 		VkPresentInfoKHR presentInfo{};
 		// Explicitly specify the structure type
 		// 明确指定结构的类型
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
-		// 指定开始呈现操作时需要等待的信号量
+		// Specify the amount of the semaphores to wait before presentation
+		// 指定开始呈现操作时需要等待的信号量的数目
 		presentInfo.waitSemaphoreCount = 1;
+		// Specify the semaphores to wait to be the renderFinishedSemaphores, because we want to wait on the command buffer to finish execution
+		// 指定开始呈现操作时需要等待的信号量为 renderFinishedSemaphores，因为我们想要等待指令缓冲结束执行
 		presentInfo.pWaitSemaphores = signalSemaphores;
 
-		// 指定呈现图像的交换链，以及图像在交换链中的索引
+		// Specify the swap chains to present inages to
+		// 指定呈现图像的交换链
 		VkSwapchainKHR swapChains[] = { swapChain };
+		// Specify the amount of the swap chains to be 1
+		// 指定交换链的数目
 		presentInfo.swapchainCount = 1;
+		// Specify the swap chains
+		// 指定交换链
 		presentInfo.pSwapchains = swapChains;
 
+		// Specify the index of the image for each swap chain
+		// 指定图像在交换链中的索引
 		presentInfo.pImageIndices = &imageIndex;
 
-		// 请求交换链进行图像呈现操作
+		// Submit the request to present an image to the swap chain
+		// 提交将交换链中的图像进行呈现的请求
 		result = vkQueuePresentKHR(presentQueue, &presentInfo);
 
-		// 当交换链过期或者表面属性已经不能准确匹配时
+		// If (the swap chain is out of date) || (the swap chain is not optimal for the current situation) || (the frame buffer is resized)
+		// 当(交换链过期) || (表面属性已经不能准确匹配) || (帧缓存被改变了大小)
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
+			// Reset the flag that the frame buffer is resized
+			// 重置帧缓存被改变了大小的标志位
 			framebufferResized = false;
+			// Recreate the swap chain
+			// 重建交换链
 			recreateSwapChain();
 		} else if (result != VK_SUCCESS) {
 			throw std::runtime_error("failed to present swap chain image!");
 		}
 
+		// Update the currentFrame
 		// 更新 currentFrame
 		currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 	}
